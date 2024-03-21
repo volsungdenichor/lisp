@@ -1,0 +1,369 @@
+#pragma once
+
+#include <cstdint>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <lisp/box.hpp>
+#include <lisp/category.hpp>
+#include <lisp/null.hpp>
+#include <lisp/overload.hpp>
+#include <lisp/stack.hpp>
+#include <lisp/symbol.hpp>
+#include <variant>
+
+namespace lisp
+{
+
+template <class Symbol, class Value>
+struct lambda_base
+{
+    using stack_type = stack_base<Symbol, Value>;
+    Value params;
+    Value body;
+    stack_type stack;
+};
+
+template <class T, class... Types>
+constexpr inline bool is_any_of = std::disjunction_v<std::is_same<T, Types>...>;
+
+struct value
+{
+    struct callable_base
+    {
+        using function_type = std::function<value(const std::vector<value>&)>;
+        function_type fn;
+        std::string name;
+
+        explicit callable_base(function_type fn, std::string name) : fn{ std::move(fn) }, name{ std::move(name) }
+        {
+        }
+
+        value operator()(const std::vector<value>& args) const
+        {
+            return fn(args);
+        }
+    };
+
+    using category_type = category;
+    using null_type = null_t;
+    using symbol_type = symbol;
+    using string_type = std::string;
+    using integer_type = std::int32_t;
+    using boolean_type = bool;
+    using floating_point_type = double;
+    using callable_type = callable_base;
+    using array_type = std::vector<value>;
+    using lambda_type = box<lambda_base<symbol_type, value>>;
+
+    using variant_type = std::variant<
+        null_type,
+        string_type,
+        symbol_type,
+        integer_type,
+        floating_point_type,
+        boolean_type,
+        array_type,
+        callable_type,
+        lambda_type>;
+
+    template <class T>
+    static constexpr inline bool is_valid_type = is_any_of<
+        T,
+        null_type,
+        string_type,
+        symbol_type,
+        integer_type,
+        floating_point_type,
+        boolean_type,
+        array_type,
+        callable_type,
+        lambda_type>;
+
+    variant_type m_data;
+
+    value() : m_data{ null_type{} }
+    {
+    }
+
+    template <class T, std::enable_if_t<std::is_constructible_v<variant_type, T>, int> = 0>
+    value(T&& v) : m_data{ std::forward<T>(v) }
+    {
+    }
+
+    value(const value&) = default;
+    value(value&&) = default;
+
+    ~value() = default;
+
+    value& operator=(value other)
+    {
+        m_data.~variant_type();
+        new (&m_data) variant_type{ std::move(other.m_data) };
+        return *this;
+    }
+
+    template <class T>
+    T& emplace(T v = {})
+    {
+        static_assert(is_valid_type<T>, "invalid type");
+        m_data.emplace<T>(std::move(v));
+        return std::get<T>(m_data);
+    }
+
+    template <class T>
+    const T* get_if() const
+    {
+        static_assert(is_valid_type<T>, "invalid type");
+        return std::get_if<T>(&m_data);
+    }
+
+    template <class T>
+    bool is() const
+    {
+        static_assert(is_valid_type<T>, "invalid type");
+        return std::holds_alternative<T>(m_data);
+    }
+
+    template <class T>
+    const T& as() const
+    {
+        static_assert(is_valid_type<T>, "invalid type");
+        ensure_type<T>();
+        return std::get<T>(m_data);
+    }
+
+    template <class... Matchers>
+    decltype(auto) match(Matchers&&... matchers) const
+    {
+        return std::visit(overload{ std::forward<Matchers>(matchers)... }, m_data);
+    }
+
+    category type() const
+    {
+        return match(
+            [](const null_type&) { return category::null; },
+            [](const string_type&) { return category::string; },
+            [](const symbol_type&) { return category::symbol; },
+            [](const integer_type&) { return category::integer; },
+            [](const floating_point_type&) { return category::floating_point; },
+            [](const boolean_type&) { return category::boolean; },
+            [](const array_type&) { return category::array; },
+            [](const callable_type&) { return category::callable; },
+            [](const lambda_type&) { return category::lambda; });
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const value& item)
+    {
+        item.match(
+            [&](const null_type& v) { os << "null"; },
+            [&](const string_type& v) { os << std::quoted(v); },
+            [&](const symbol_type& v) { os << v; },
+            [&](const integer_type& v) { os << v; },
+            [&](const floating_point_type& v) { os << std::fixed << std::setprecision(1) << v; },
+            [&](const boolean_type& v) { os << std::boolalpha << v; },
+            [&](const array_type& v)
+            {
+                const auto b = std::begin(v);
+                os << "(";
+                for (auto it = std::begin(v); it != std::end(v); ++it)
+                {
+                    if (it != b)
+                    {
+                        os << " ";
+                    }
+                    os << *it;
+                }
+                os << ")";
+            },
+            [&](const callable_type& v) { os << v.name; },
+            [&](const lambda_type& v) { os << "lambda " << (*v).params; });
+        return os;
+    }
+
+private:
+    template <class T>
+    static category to_category()
+    {
+        static_assert(is_valid_type<T>, "invalid type");
+        if constexpr (std::is_same_v<T, null_type>)
+        {
+            return category::null;
+        }
+        if constexpr (std::is_same_v<T, string_type>)
+        {
+            return category::string;
+        }
+        if constexpr (std::is_same_v<T, symbol_type>)
+        {
+            return category::symbol;
+        }
+        if constexpr (std::is_same_v<T, integer_type>)
+        {
+            return category::integer;
+        }
+        if constexpr (std::is_same_v<T, floating_point_type>)
+        {
+            return category::floating_point;
+        }
+        if constexpr (std::is_same_v<T, boolean_type>)
+        {
+            return category::boolean;
+        }
+        if constexpr (std::is_same_v<T, array_type>)
+        {
+            return category::array;
+        }
+        if constexpr (std::is_same_v<T, callable_type>)
+        {
+            return category::callable;
+        }
+        if constexpr (std::is_same_v<T, lambda_type>)
+        {
+            return category::lambda;
+        }
+    }
+
+    template <class T>
+    void ensure_type() const
+    {
+        static_assert(is_valid_type<T>, "invalid type");
+
+        if (is<T>())
+        {
+            return;
+        }
+        std::stringstream ss;
+        ss << "accessing: " << to_category<T>() << ", actual: " << category();
+        throw std::runtime_error{ ss.str() };
+    }
+};
+
+template <class BinaryOp>
+value op(const value& lhs, const value& rhs, BinaryOp op, std::string_view op_name)
+{
+    if (lhs.is<value::integer_type>() && rhs.is<value::integer_type>())
+    {
+        return op(lhs.as<value::integer_type>(), rhs.as<value::integer_type>());
+    }
+    else if (lhs.is<value::integer_type>() && rhs.is<value::floating_point_type>())
+    {
+        return op(lhs.as<value::integer_type>(), rhs.as<value::floating_point_type>());
+    }
+    else if (lhs.is<value::floating_point_type>() && rhs.is<value::integer_type>())
+    {
+        return op(lhs.as<value::floating_point_type>(), rhs.as<value::integer_type>());
+    }
+    throw std::runtime_error{ str("Cannot ", op_name, " ", lhs.type(), " and ", rhs.type()) };
+}
+
+template <class BinaryOp>
+bool cmp(const value& lhs, const value& rhs, BinaryOp op)
+{
+    if (lhs.is<value::integer_type>() && rhs.is<value::integer_type>())
+    {
+        return op(lhs.as<value::integer_type>(), rhs.as<value::integer_type>());
+    }
+    else if (lhs.is<value::integer_type>() && rhs.is<value::floating_point_type>())
+    {
+        return op(lhs.as<value::integer_type>(), rhs.as<value::floating_point_type>());
+    }
+    else if (lhs.is<value::floating_point_type>() && rhs.is<value::integer_type>())
+    {
+        return op(lhs.as<value::floating_point_type>(), rhs.as<value::integer_type>());
+    }
+    else if (lhs.is<value::string_type>() && rhs.is<value::string_type>())
+    {
+        return op(lhs.as<value::string_type>(), rhs.as<value::string_type>());
+    }
+    throw std::runtime_error{ str("Cannot compare ", lhs.type(), " and ", rhs.type()) };
+}
+
+value operator+(const value& lhs, const value& rhs)
+{
+    return op(lhs, rhs, std::plus{}, "add");
+}
+
+value operator-(const value& lhs, const value& rhs)
+{
+    return op(lhs, rhs, std::minus{}, "subtract");
+}
+
+value operator*(const value& lhs, const value& rhs)
+{
+    return op(lhs, rhs, std::multiplies{}, "multiply");
+}
+
+value operator/(const value& lhs, const value& rhs)
+{
+    return op(lhs, rhs, std::divides{}, "divide");
+}
+
+bool operator==(const value& lhs, const value& rhs)
+{
+    if (lhs.type() != rhs.type())
+    {
+        return false;
+    }
+    else if (lhs.is<value::null_type>())
+    {
+        return true;
+    }
+    else if (lhs.is<value::string_type>())
+    {
+        return lhs.as<value::string_type>() == rhs.as<value::string_type>();
+    }
+    else if (lhs.is<value::symbol_type>())
+    {
+        return lhs.as<value::symbol_type>() == rhs.as<value::symbol_type>();
+    }
+    else if (lhs.is<value::integer_type>())
+    {
+        return lhs.as<value::integer_type>() == rhs.as<value::integer_type>();
+    }
+    else if (lhs.is<value::floating_point_type>())
+    {
+        return lhs.as<value::floating_point_type>() == rhs.as<value::floating_point_type>();
+    }
+    else if (lhs.is<value::boolean_type>())
+    {
+        return lhs.as<value::boolean_type>() == rhs.as<value::boolean_type>();
+    }
+    else if (lhs.is<value::array_type>())
+    {
+        return lhs.as<value::array_type>() == rhs.as<value::array_type>();
+    }
+
+    return false;
+}
+
+bool operator!=(const value& lhs, const value& rhs)
+{
+    return !(lhs == rhs);
+}
+
+bool operator<(const value& lhs, const value& rhs)
+{
+    return cmp(lhs, rhs, std::less{});
+}
+
+bool operator<=(const value& lhs, const value& rhs)
+{
+    return cmp(lhs, rhs, std::less_equal{});
+}
+
+bool operator>(const value& lhs, const value& rhs)
+{
+    return cmp(lhs, rhs, std::greater{});
+}
+
+bool operator>=(const value& lhs, const value& rhs)
+{
+    return cmp(lhs, rhs, std::greater_equal{});
+}
+
+using array = value::array_type;
+using callable = value::callable_type;
+using stack_type = stack_base<value::symbol_type, value>;
+
+}  // namespace lisp

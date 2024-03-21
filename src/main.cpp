@@ -1,7 +1,7 @@
 #include <iostream>
 #include <lisp/lisp.hpp>
 
-int main()
+void run()
 {
     lisp::stack_type s{ { lisp::default_stack() } };
     using namespace lisp::literals;
@@ -14,4 +14,16 @@ int main()
 
     std::cout << v << std::endl;
     std::cout << lisp::evaluate(v, s) << std::endl;
+}
+
+int main()
+{
+    try
+    {
+        run();
+    }
+    catch (const std::exception& ex)
+    {
+        std::cerr << ex.what() << '\n';
+    }
 }

@@ -63,7 +63,7 @@ public:
 namespace literals
 {
 
-auto operator""_s(const char* str, std::size_t size) -> symbol
+inline auto operator""_s(const char* str, std::size_t size) -> symbol
 {
     return symbol(std::string(str, size));
 }

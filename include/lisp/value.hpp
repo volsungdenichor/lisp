@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <functional>
-#include <iomanip>
 #include <iostream>
 #include <lisp/box.hpp>
 #include <lisp/category.hpp>
@@ -139,47 +138,9 @@ struct value
         return std::visit(overload{ std::forward<Matchers>(matchers)... }, m_data);
     }
 
-    category type() const
-    {
-        return match(
-            [](const null_type&) { return category::null; },
-            [](const string_type&) { return category::string; },
-            [](const symbol_type&) { return category::symbol; },
-            [](const integer_type&) { return category::integer; },
-            [](const floating_point_type&) { return category::floating_point; },
-            [](const boolean_type&) { return category::boolean; },
-            [](const array_type&) { return category::array; },
-            [](const callable_type&) { return category::callable; },
-            [](const lambda_type&) { return category::lambda; });
-    }
+    category type() const;
 
-    friend std::ostream& operator<<(std::ostream& os, const value& item)
-    {
-        item.match(
-            [&](const null_type& v) { os << "null"; },
-            [&](const string_type& v) { os << std::quoted(v); },
-            [&](const symbol_type& v) { os << v; },
-            [&](const integer_type& v) { os << v; },
-            [&](const floating_point_type& v) { os << std::fixed << std::setprecision(1) << v; },
-            [&](const boolean_type& v) { os << std::boolalpha << v; },
-            [&](const array_type& v)
-            {
-                const auto b = std::begin(v);
-                os << "(";
-                for (auto it = std::begin(v); it != std::end(v); ++it)
-                {
-                    if (it != b)
-                    {
-                        os << " ";
-                    }
-                    os << *it;
-                }
-                os << ")";
-            },
-            [&](const callable_type& v) { os << v.name; },
-            [&](const lambda_type& v) { os << "lambda " << (*v).params; });
-        return os;
-    }
+    friend std::ostream& operator<<(std::ostream& os, const value& item);
 
 private:
     template <class T>

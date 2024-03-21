@@ -75,7 +75,7 @@ struct list
     }
 };
 
-value quote(value v)
+inline value quote(value v)
 {
     using namespace literals;
     return value::array_type{ "quote"_s, std::move(v) };

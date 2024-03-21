@@ -1,7 +1,38 @@
 #include "lisp/value.hpp"
 
+#include <iomanip>
+
 namespace lisp
 {
+
+category value::type() const
+{
+    return match(
+        [](const null_type&) { return category::null; },
+        [](const string_type&) { return category::string; },
+        [](const symbol_type&) { return category::symbol; },
+        [](const integer_type&) { return category::integer; },
+        [](const floating_point_type&) { return category::floating_point; },
+        [](const boolean_type&) { return category::boolean; },
+        [](const array_type&) { return category::array; },
+        [](const callable_type&) { return category::callable; },
+        [](const lambda_type&) { return category::lambda; });
+}
+
+std::ostream& operator<<(std::ostream& os, const value& item)
+{
+    item.match(
+        [&](const value::null_type& v) { os << "null"; },
+        [&](const value::string_type& v) { os << std::quoted(v); },
+        [&](const value::symbol_type& v) { os << v; },
+        [&](const value::integer_type& v) { os << v; },
+        [&](const value::floating_point_type& v) { os << std::fixed << std::setprecision(1) << v; },
+        [&](const value::boolean_type& v) { os << std::boolalpha << v; },
+        [&](const value::array_type& v) { os << "(" << delimit(v, " ") << ")"; },
+        [&](const value::callable_type& v) { os << v.name; },
+        [&](const value::lambda_type& v) { os << "lambda " << (*v).params; });
+    return os;
+}
 
 template <class BinaryOp>
 value op(const value& lhs, const value& rhs, BinaryOp op, std::string_view op_name)

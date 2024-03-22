@@ -1,18 +1,20 @@
 #include <iostream>
 #include <lisp/lisp.hpp>
+#include <lisp/utils/std_ostream.hpp>
 
 void run()
 {
+    std::string text = R"(
+        (begin
+            (let val 123)
+            (let func (lambda (arg) (/ arg 10.0)))
+            (print val)
+            (print (func val))
+        )
+    )";
+    const auto val = lisp::parse(text);
+
     lisp::stack_type stack = lisp::default_stack();
-    using namespace lisp::literals;
-    const lisp::value val = lisp::array{
-        //
-        "begin"_s,
-        lisp::array{
-            "let"_s, "func"_s, lisp::array{ "lambda"_s, lisp::array{ "arg"_s }, lisp::array{ "/"_s, "arg"_s, 10.0 } } },
-        lisp::array{ "print"_s, lisp::array{ "list"_s, 1, 2, 3 } },
-        lisp::array{ "print"_s, lisp::array{ "func"_s, 3 } },
-    };
 
     std::cout << val << std::endl;
     std::cout << lisp::evaluate(val, stack) << std::endl;

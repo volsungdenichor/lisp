@@ -21,7 +21,7 @@ struct stack_base
 
     const value_type& insert(const symbol_type& s, const value_type& v)
     {
-        frames.back().emplace(s, v);
+        frames.back()[s] = v;
         return v;
     }
 

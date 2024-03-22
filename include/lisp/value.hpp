@@ -116,13 +116,6 @@ struct value
     category type() const;
 
     friend std::ostream& operator<<(std::ostream& os, const value& item);
-
-private:
-    template <class... Matchers>
-    decltype(auto) match(Matchers&&... matchers) const
-    {
-        return std::visit(overload{ std::forward<Matchers>(matchers)... }, m_data);
-    }
 };
 
 value operator+(const value& lhs, const value& rhs);

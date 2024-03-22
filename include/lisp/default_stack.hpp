@@ -6,7 +6,7 @@
 namespace lisp
 {
 
-stack_type::frame_type default_stack()
+inline stack_type::frame_type default_frame()
 {
     using namespace literals;
     return stack_type::frame_type{
@@ -26,6 +26,11 @@ stack_type::frame_type default_stack()
         { "cons"_s, callable{ cons{}, "cons" } },
         { "list"_s, callable{ list{}, "list" } },
     };
+}
+
+inline stack_type default_stack()
+{
+    return { { default_frame() } };
 }
 
 }  // namespace lisp

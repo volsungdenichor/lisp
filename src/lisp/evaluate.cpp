@@ -67,15 +67,14 @@ value evaluate(const value& expr, stack_type& stack)
         {
             const auto& lambda = func.as_lambda();
             const auto& params = lambda.params.as_array();
+            if (params.size() != args.size())
+            {
+                throw std::runtime_error{ str("Invalid argument number: expected ", params.size(), ", got ", args.size()) };
+            }
             auto new_stack = lambda.stack.next();
             for (std::size_t i = 0; i < params.size(); ++i)
             {
                 new_stack.insert(params.at(i).as_symbol(), args.at(i));
-            }
-
-            if (params.size() != args.size())
-            {
-                throw std::runtime_error{ str("Invalid argument number: expected ", params.size(), ", got ", args.size()) };
             }
 
             const auto fn = [&](const std::vector<value>& arguments) -> value { return evaluate(lambda.body, new_stack); };

@@ -118,81 +118,10 @@ struct value
     friend std::ostream& operator<<(std::ostream& os, const value& item);
 
 private:
-    template <class T>
-    const T& as() const
-    {
-        static_assert(is_valid_type<T>, "invalid type");
-        ensure_type<T>();
-        return std::get<T>(m_data);
-    }
-
-    template <class T>
-    bool is() const
-    {
-        static_assert(is_valid_type<T>, "invalid type");
-        return std::holds_alternative<T>(m_data);
-    }
-
     template <class... Matchers>
     decltype(auto) match(Matchers&&... matchers) const
     {
         return std::visit(overload{ std::forward<Matchers>(matchers)... }, m_data);
-    }
-
-    template <class T>
-    static category to_category()
-    {
-        static_assert(is_valid_type<T>, "invalid type");
-        if constexpr (std::is_same_v<T, null_type>)
-        {
-            return category::null;
-        }
-        if constexpr (std::is_same_v<T, string_type>)
-        {
-            return category::string;
-        }
-        if constexpr (std::is_same_v<T, symbol_type>)
-        {
-            return category::symbol;
-        }
-        if constexpr (std::is_same_v<T, integer_type>)
-        {
-            return category::integer;
-        }
-        if constexpr (std::is_same_v<T, floating_point_type>)
-        {
-            return category::floating_point;
-        }
-        if constexpr (std::is_same_v<T, boolean_type>)
-        {
-            return category::boolean;
-        }
-        if constexpr (std::is_same_v<T, array_type>)
-        {
-            return category::array;
-        }
-        if constexpr (std::is_same_v<T, callable_type>)
-        {
-            return category::callable;
-        }
-        if constexpr (std::is_same_v<T, lambda_type>)
-        {
-            return category::lambda;
-        }
-    }
-
-    template <class T>
-    void ensure_type() const
-    {
-        static_assert(is_valid_type<T>, "invalid type");
-
-        if (is<T>())
-        {
-            return;
-        }
-        std::stringstream ss;
-        ss << "accessing: " << to_category<T>() << ", actual: " << category();
-        throw std::runtime_error{ ss.str() };
     }
 };
 

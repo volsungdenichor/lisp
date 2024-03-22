@@ -32,92 +32,137 @@ category value::type() const
 
 bool value::is_null() const
 {
-    return is<null_type>();
+    return std::holds_alternative<null_type>(m_data);
 }
 
 bool value::is_string() const
 {
-    return is<string_type>();
+    return std::holds_alternative<string_type>(m_data);
 }
 
 bool value::is_symbol() const
 {
-    return is<symbol_type>();
+    return std::holds_alternative<symbol_type>(m_data);
 }
 
 bool value::is_integer() const
 {
-    return is<integer_type>();
+    return std::holds_alternative<integer_type>(m_data);
 }
 
 bool value::is_boolean() const
 {
-    return is<boolean_type>();
+    return std::holds_alternative<boolean_type>(m_data);
 }
 
 bool value::is_floating_point() const
 {
-    return is<floating_point_type>();
+    return std::holds_alternative<floating_point_type>(m_data);
 }
 
 bool value::is_array() const
 {
-    return is<array_type>();
+    return std::holds_alternative<array_type>(m_data);
 }
 
 bool value::is_callable() const
 {
-    return is<callable_type>();
+    return std::holds_alternative<callable_type>(m_data);
 }
 
 bool value::is_lambda() const
 {
-    return is<lambda_type>();
+    return std::holds_alternative<lambda_type>(m_data);
 }
 
 const value::null_type& value::as_null() const
 {
-    return as<null_type>();
+    const auto ptr = std::get_if<null_type>(&m_data);
+    if (!ptr)
+    {
+        throw std::runtime_error{ str("accessing: ", category_type::null, ", actual: ", category()) };
+    }
+    return *ptr;
 }
 
 const value::string_type& value::as_string() const
 {
-    return as<string_type>();
+    const auto ptr = std::get_if<string_type>(&m_data);
+    if (!ptr)
+    {
+        throw std::runtime_error{ str("accessing: ", category_type::string, ", actual: ", category()) };
+    }
+    return *ptr;
 }
 
 const value::symbol_type& value::as_symbol() const
 {
-    return as<symbol_type>();
+    const auto ptr = std::get_if<symbol_type>(&m_data);
+    if (!ptr)
+    {
+        throw std::runtime_error{ str("accessing: ", category_type::symbol, ", actual: ", category()) };
+    }
+    return *ptr;
 }
 
 const value::integer_type& value::as_integer() const
 {
-    return as<integer_type>();
+    const auto ptr = std::get_if<integer_type>(&m_data);
+    if (!ptr)
+    {
+        throw std::runtime_error{ str("accessing: ", category_type::integer, ", actual: ", category()) };
+    }
+    return *ptr;
 }
 
 const value::boolean_type& value::as_boolean() const
 {
-    return as<boolean_type>();
+    const auto ptr = std::get_if<boolean_type>(&m_data);
+    if (!ptr)
+    {
+        throw std::runtime_error{ str("accessing: ", category_type::boolean, ", actual: ", category()) };
+    }
+    return *ptr;
 }
 
 const value::floating_point_type& value::as_floating_point() const
 {
-    return as<floating_point_type>();
+    const auto ptr = std::get_if<floating_point_type>(&m_data);
+    if (!ptr)
+    {
+        throw std::runtime_error{ str("accessing: ", category_type::floating_point, ", actual: ", category()) };
+    }
+    return *ptr;
 }
 
 const value::array_type& value::as_array() const
 {
-    return as<array_type>();
+    const auto ptr = std::get_if<array_type>(&m_data);
+    if (!ptr)
+    {
+        throw std::runtime_error{ str("accessing: ", category_type::array, ", actual: ", category()) };
+    }
+    return *ptr;
 }
 
 const value::callable_type& value::as_callable() const
 {
-    return as<callable_type>();
+    const auto ptr = std::get_if<callable_type>(&m_data);
+    if (!ptr)
+    {
+        throw std::runtime_error{ str("accessing: ", category_type::callable, ", actual: ", category()) };
+    }
+    return *ptr;
 }
 
 const value::lambda_type& value::as_lambda() const
 {
-    return as<lambda_type>();
+    const auto ptr = std::get_if<lambda_type>(&m_data);
+    if (!ptr)
+    {
+        throw std::runtime_error{ str("accessing: ", category_type::lambda, ", actual: ", category()) };
+    }
+    return *ptr;
 }
 
 std::ostream& operator<<(std::ostream& os, const value& item)

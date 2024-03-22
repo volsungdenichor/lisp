@@ -27,7 +27,7 @@ category value::type() const
         [](const boolean_type&) { return category::boolean; },
         [](const array_type&) { return category::array; },
         [](const callable_type&) { return category::callable; },
-        [](const lambda_type&) { return category::lambda; });
+        [](const box<lambda_type>&) { return category::lambda; });
 }
 
 bool value::is_null() const
@@ -72,7 +72,7 @@ bool value::is_callable() const
 
 bool value::is_lambda() const
 {
-    return std::holds_alternative<lambda_type>(m_data);
+    return std::holds_alternative<box<lambda_type>>(m_data);
 }
 
 const value::null_type& value::as_null() const
@@ -157,12 +157,12 @@ const value::callable_type& value::as_callable() const
 
 const value::lambda_type& value::as_lambda() const
 {
-    const auto ptr = std::get_if<lambda_type>(&m_data);
+    const auto ptr = std::get_if<box<lambda_type>>(&m_data);
     if (!ptr)
     {
         throw std::runtime_error{ str("accessing: ", category_type::lambda, ", actual: ", category()) };
     }
-    return *ptr;
+    return **ptr;
 }
 
 std::ostream& operator<<(std::ostream& os, const value& item)
@@ -176,7 +176,7 @@ std::ostream& operator<<(std::ostream& os, const value& item)
         [&](const value::boolean_type& v) { os << std::boolalpha << v; },
         [&](const value::array_type& v) { os << "(" << delimit(v, " ") << ")"; },
         [&](const value::callable_type& v) { os << v.name; },
-        [&](const value::lambda_type& v) { os << "lambda " << (*v).params; });
+        [&](const box<value::lambda_type>& v) { os << "lambda " << (*v).params; });
     return os;
 }
 

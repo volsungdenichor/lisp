@@ -26,6 +26,11 @@ public:
         return *this;
     }
 
+    operator value_type&() const
+    {
+        return **this;
+    }
+
     template <class U, std::enable_if_t<std::is_constructible_v<value_type, U>, int> = 0>
     box& operator=(U&& value)
     {

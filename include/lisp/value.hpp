@@ -53,7 +53,7 @@ struct value
     using floating_point_type = double;
     using callable_type = callable_base;
     using array_type = std::vector<value>;
-    using lambda_type = box<lambda_base<symbol_type, value>>;
+    using lambda_type = lambda_base<symbol_type, value>;
 
     using variant_type = std::variant<
         null_type,
@@ -64,7 +64,7 @@ struct value
         boolean_type,
         array_type,
         callable_type,
-        lambda_type>;
+        box<lambda_type>>;
 
     template <class T>
     static constexpr inline bool is_valid_type = is_any_of<

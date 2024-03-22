@@ -25,7 +25,7 @@ value evaluate(const value& expr, stack_type& stack)
             }
             else if (is(a.front(), "lambda"))
             {
-                return value::lambda_type{ value::lambda_type::value_type{ a.at(1), a.at(2), stack } };
+                return value::lambda_type{ a.at(1), a.at(2), stack };
             }
         }
         else if (a.size() == 2)
@@ -65,7 +65,7 @@ value evaluate(const value& expr, stack_type& stack)
         }
         else if (func.is_lambda())
         {
-            const auto& lambda = *func.as_lambda();
+            const auto& lambda = func.as_lambda();
             const auto& params = lambda.params.as_array();
             auto new_stack = lambda.stack.next();
             for (std::size_t i = 0; i < params.size(); ++i)

@@ -6,14 +6,14 @@ namespace lisp
 value evaluate(const value& expr, stack_type& stack)
 {
     static const auto is = [](const value& v, const value::string_type& s) { return v == value{ value::symbol_type(s) }; };
-    if (expr.is<value::array_type>())
+    if (expr.is_array())
     {
-        const auto& a = expr.as<value::array_type>();
+        const auto& a = expr.as_array();
         if (a.size() == 4)
         {
             if (is(a.front(), "if"))
             {
-                return evaluate(a.at(1), stack).as<bool>() ? evaluate(a.at(2), stack) : evaluate(a.at(3), stack);
+                return evaluate(a.at(1), stack).as_boolean() ? evaluate(a.at(2), stack) : evaluate(a.at(3), stack);
             }
         }
         else if (a.size() == 3)
@@ -21,7 +21,7 @@ value evaluate(const value& expr, stack_type& stack)
             if (is(a.front(), "let"))
             {
                 auto res = evaluate(a.at(2), stack);
-                return stack.insert(a.at(1).as<symbol>(), res);
+                return stack.insert(a.at(1).as_symbol(), res);
             }
             else if (is(a.front(), "lambda"))
             {
@@ -59,18 +59,18 @@ value evaluate(const value& expr, stack_type& stack)
             });
 
         const auto func = evaluate(a.at(0), stack);
-        if (const auto callable = func.get_if<value::callable_type>())
+        if (func.is_callable())
         {
-            return (*callable)(args);
+            return func.as_callable()(args);
         }
-        else if (const auto maybe_lambda = func.get_if<value::lambda_type>())
+        else if (func.is_lambda())
         {
-            const auto& lambda = **maybe_lambda;
-            const auto& params = lambda.params.as<value::array_type>();
+            const auto& lambda = *func.as_lambda();
+            const auto& params = lambda.params.as_array();
             auto new_stack = lambda.stack.next();
             for (std::size_t i = 0; i < params.size(); ++i)
             {
-                new_stack.insert(params.at(i).as<value::symbol_type>(), args.at(i));
+                new_stack.insert(params.at(i).as_symbol(), args.at(i));
             }
 
             if (params.size() != args.size())
@@ -79,16 +79,16 @@ value evaluate(const value& expr, stack_type& stack)
             }
 
             const auto fn = [&](const std::vector<value>& arguments) -> value { return evaluate(lambda.body, new_stack); };
-            return value::callable_type{ fn, a.at(0).as<value::string_type>() }(args);
+            return value::callable_type{ fn, "?" }(args);
         }
         else
         {
             throw std::runtime_error{ str("Error on executing ", func) };
         }
     }
-    else if (expr.is<value::symbol_type>())
+    else if (expr.is_symbol())
     {
-        return stack[expr.as<value::symbol_type>()];
+        return stack[expr.as_symbol()];
     }
     return expr;
 }

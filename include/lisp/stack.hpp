@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lisp/string_utils.hpp>
+#include <lisp/utils/string_utils.hpp>
 #include <map>
 #include <vector>
 

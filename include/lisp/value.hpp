@@ -3,12 +3,12 @@
 #include <cstdint>
 #include <functional>
 #include <iostream>
-#include <lisp/box.hpp>
 #include <lisp/category.hpp>
 #include <lisp/null.hpp>
-#include <lisp/overload.hpp>
 #include <lisp/stack.hpp>
 #include <lisp/symbol.hpp>
+#include <lisp/utils/box.hpp>
+#include <lisp/utils/overload.hpp>
 #include <variant>
 
 namespace lisp
@@ -81,9 +81,7 @@ struct value
 
     variant_type m_data;
 
-    value() : m_data{ null_type{} }
-    {
-    }
+    value();
 
     template <class T, std::enable_if_t<std::is_constructible_v<variant_type, T>, int> = 0>
     value(T&& v) : m_data{ std::forward<T>(v) }
@@ -93,28 +91,39 @@ struct value
     value(const value&) = default;
     value(value&&) = default;
 
-    ~value() = default;
+    value& operator=(value other);
 
-    value& operator=(value other)
-    {
-        m_data.~variant_type();
-        new (&m_data) variant_type{ std::move(other.m_data) };
-        return *this;
-    }
+    bool is_null() const;
+    bool is_string() const;
+    bool is_symbol() const;
+    bool is_integer() const;
+    bool is_boolean() const;
+    bool is_floating_point() const;
+    bool is_array() const;
+    bool is_callable() const;
+    bool is_lambda() const;
 
+    const null_type& as_null() const;
+    const string_type& as_string() const;
+    const symbol_type& as_symbol() const;
+    const integer_type& as_integer() const;
+    const boolean_type& as_boolean() const;
+    const floating_point_type& as_floating_point() const;
+    const array_type& as_array() const;
+    const callable_type& as_callable() const;
+    const lambda_type& as_lambda() const;
+
+    category type() const;
+
+    friend std::ostream& operator<<(std::ostream& os, const value& item);
+
+private:
     template <class T>
-    T& emplace(T v = {})
+    const T& as() const
     {
         static_assert(is_valid_type<T>, "invalid type");
-        m_data.emplace<T>(std::move(v));
+        ensure_type<T>();
         return std::get<T>(m_data);
-    }
-
-    template <class T>
-    const T* get_if() const
-    {
-        static_assert(is_valid_type<T>, "invalid type");
-        return std::get_if<T>(&m_data);
     }
 
     template <class T>
@@ -124,25 +133,12 @@ struct value
         return std::holds_alternative<T>(m_data);
     }
 
-    template <class T>
-    const T& as() const
-    {
-        static_assert(is_valid_type<T>, "invalid type");
-        ensure_type<T>();
-        return std::get<T>(m_data);
-    }
-
     template <class... Matchers>
     decltype(auto) match(Matchers&&... matchers) const
     {
         return std::visit(overload{ std::forward<Matchers>(matchers)... }, m_data);
     }
 
-    category type() const;
-
-    friend std::ostream& operator<<(std::ostream& os, const value& item);
-
-private:
     template <class T>
     static category to_category()
     {

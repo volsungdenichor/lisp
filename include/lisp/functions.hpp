@@ -36,7 +36,7 @@ struct car
 {
     value operator()(const std::vector<value>& args) const
     {
-        return args.at(0).as<value::array_type>().at(0);
+        return args.at(0).as_array().at(0);
     }
 };
 
@@ -44,7 +44,7 @@ struct cdr
 {
     value operator()(const std::vector<value>& args) const
     {
-        const auto& a = args.at(0).as<value::array_type>();
+        const auto& a = args.at(0).as_array();
         return value::array_type{ std::next(std::begin(a)), std::end(a) };
     }
 };
@@ -55,9 +55,10 @@ struct cons
     {
         value::array_type res;
         res.push_back(args.at(0));
-        if (const auto a = args.at(1).get_if<value::array_type>())
+        if (args.at(1).is_array())
         {
-            res.insert(std::end(res), std::begin(*a), std::end(*a));
+            const auto& a = args.at(1).as_array();
+            res.insert(std::end(res), std::begin(a), std::end(a));
         }
         else
         {

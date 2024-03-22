@@ -16,6 +16,15 @@ token pop_front(std::vector<token>& v)
     return result;
 }
 
+std::optional<value::null_type> as_null(const token& tok)
+{
+    if (tok == "null")
+    {
+        return null;
+    }
+    return {};
+}
+
 std::optional<value::string_type> as_string(const token& tok)
 {
     if (tok.front() == '\"' && tok.back() == '\"')
@@ -80,6 +89,10 @@ value read_atom(const token& tok)
         return *v;
     }
     else if (const auto v = as_boolean(tok))
+    {
+        return *v;
+    }
+    else if (const auto v = as_null(tok))
     {
         return *v;
     }

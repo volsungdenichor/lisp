@@ -7,4 +7,6 @@
     (let lst (quote ("Adam" "Beata" "Celina" "Dorota" "Edek")))
     (let is-woman (str.has_suffix "a"))
     (print (lst |> seq.filter is-woman))
+    (print (lst |> seq.at 2))
+    (print (lst |> seq.at 5))
 )

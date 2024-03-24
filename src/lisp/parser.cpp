@@ -1,5 +1,6 @@
 #include <lisp/parser.hpp>
 #include <lisp/tokenizer.hpp>
+#include <lisp/utils/iterator_range.hpp>
 #include <optional>
 
 namespace lisp
@@ -29,7 +30,7 @@ std::optional<value::string_type> as_string(const token& tok)
 {
     if (tok.front() == '\"' && tok.back() == '\"')
     {
-        return value::string_type{ std::begin(tok) + 1, std::end(tok) - 1 };
+        return iterator_range{ tok }.drop(1).drop_back(1);
     }
     return {};
 }

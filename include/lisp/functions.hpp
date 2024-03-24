@@ -122,6 +122,23 @@ struct seq_rev
     }
 };
 
+struct seq_at
+{
+    value operator()(const std::vector<value>& args) const
+    {
+        const auto n = args.at(0).as_integer();
+        const auto& a = args.at(1).as_array();
+        if (n < static_cast<value::integer_type>(a.size()))
+        {
+            return array{ symbol{ "ok" }, a[n] };
+        }
+        else
+        {
+            return array{ symbol{ "err" }, str("invalid index") };
+        }
+    }
+};
+
 struct str_has_prefix
 {
     value operator()(const std::vector<value>& args) const

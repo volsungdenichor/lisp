@@ -19,6 +19,12 @@ struct iterator_range
     {
     }
 
+    template <class Container>
+    operator Container() const
+    {
+        return Container{ begin(), end() };
+    }
+
     iterator begin() const
     {
         return b;
@@ -44,9 +50,19 @@ struct iterator_range
         return iterator_range{ std::next(begin(), n), end() };
     }
 
+    iterator_range drop_back(difference_type n) const
+    {
+        return iterator_range{ begin(), std::prev(end(), n) };
+    }
+
     iterator_range take(difference_type n) const
     {
         return iterator_range{ begin(), std::next(begin(), n) };
+    }
+
+    iterator_range take_back(difference_type n) const
+    {
+        return iterator_range{ std::prev(end(), n), end() };
     }
 
     reference operator[](difference_type n) const

@@ -18,10 +18,12 @@ testing::Matcher<const lisp::value&> Approx(double v)
 
 TEST(expr, atoms)
 {
+    using namespace std::string_literals;
     EXPECT_THAT(eval("5"), 5);
     EXPECT_THAT(eval("5.14"), Approx(5.14));
     EXPECT_THAT(eval("true"), true);
     EXPECT_THAT(eval("false"), false);
+    EXPECT_THAT(eval("\"Abc\""), "Abc"s);
 }
 
 TEST(expr, quote)

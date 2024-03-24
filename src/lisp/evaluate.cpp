@@ -1,4 +1,5 @@
 #include <lisp/evaluate.hpp>
+#include <lisp/utils/iterator_range.hpp>
 
 namespace lisp
 {
@@ -28,53 +29,53 @@ value evaluate(const value& expr, stack_type* stack)
     if (expr.is_array())
     {
         const auto a = apply_macro(expr.as_array());
+        const auto args = iterator_range{ a }.drop(1);
         if (a.size() == 4)
         {
             if (is(a.front(), "if"))
             {
-                return evaluate(a.at(1), stack).as_boolean() ? evaluate(a.at(2), stack) : evaluate(a.at(3), stack);
+                return evaluate(args.at(0), stack).as_boolean() ? evaluate(args.at(1), stack) : evaluate(args.at(2), stack);
             }
         }
         else if (a.size() == 3)
         {
             if (is(a.front(), "let"))
             {
-                auto res = evaluate(a.at(2), stack);
-                return stack->insert(a.at(1).as_symbol(), res);
+                return stack->insert(args.at(0).as_symbol(), evaluate(args.at(1), stack));
             }
             else if (is(a.front(), "lambda"))
             {
-                return value::lambda_type{ a.at(1), a.at(2), *stack };
+                return value::lambda_type{ args.at(0), args.at(1), *stack };
             }
         }
         else if (a.size() == 2)
         {
             if (is(a.front(), "quote") || is(a.front(), "'"))
             {
-                return a.at(1);
+                return args.at(0);
             }
         }
         if (is(a.front(), "begin"))
         {
             value result = {};
-            for (auto it = std::next(std::begin(a)); it != std::end(a); ++it)
+            for (const value& arg : args)
             {
-                result = evaluate(*it, stack);
+                result = evaluate(arg, stack);
             }
             return result;
         }
         if (is(a.front(), "cond"))
         {
-            for (auto it = std::next(std::begin(a)); it != std::end(a); ++it)
+            for (const auto& arg : args)
             {
-                const auto& expr = it->as_array();
-                if (expr.size() != 2)
+                const auto& pair = arg.as_array();
+                if (pair.size() != 2)
                 {
                     throw std::runtime_error{ "cond: a list of pairs required" };
                 }
-                if (evaluate(expr[0], stack))
+                if (evaluate(pair[0], stack))
                 {
-                    return evaluate(expr[1], stack);
+                    return evaluate(pair[1], stack);
                 }
             }
             throw std::runtime_error{ "cond: no match found" };
@@ -84,10 +85,10 @@ value evaluate(const value& expr, stack_type* stack)
             [&]()
             {
                 std::vector<value> result;
-                result.reserve(a.size() - 1);
+                result.reserve(args.size());
                 std::transform(
-                    std::begin(a) + 1,
-                    std::end(a),
+                    std::begin(args),
+                    std::end(args),
                     std::back_inserter(result),
                     [&](const value& v) { return evaluate(v, stack); });
                 return result;

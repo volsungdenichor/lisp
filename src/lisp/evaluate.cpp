@@ -3,21 +3,26 @@
 namespace lisp
 {
 
+array apply_macro(const array& a)
+{
+    if (a.size() == 4 && a.at(0) == symbol{ "defun" })
+    {
+        return array{ symbol{ "let" }, a.at(1), array{ symbol{ "lambda" }, a.at(2), a.at(3) } };
+    }
+    return a;
+}
+
 value evaluate(const value& expr, stack_type* stack)
 {
     static const auto is = [](const value& v, const value::string_type& s) { return v == value{ value::symbol_type(s) }; };
     if (expr.is_array())
     {
-        const auto& a = expr.as_array();
+        const auto a = apply_macro(expr.as_array());
         if (a.size() == 4)
         {
             if (is(a.front(), "if"))
             {
                 return evaluate(a.at(1), stack).as_boolean() ? evaluate(a.at(2), stack) : evaluate(a.at(3), stack);
-            }
-            if (is(a.front(), "defun"))
-            {
-                return evaluate(array{ symbol{ "let" }, a.at(1), array{ symbol{ "lambda" }, a.at(2), a.at(3) } }, stack);
             }
         }
         else if (a.size() == 3)

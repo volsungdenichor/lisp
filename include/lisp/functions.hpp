@@ -112,6 +112,16 @@ struct seq_filter
     }
 };
 
+struct seq_rev
+{
+    value operator()(const std::vector<value>& args) const
+    {
+        array a = args.at(0).as_array();
+        std::reverse(std::begin(a), std::end(a));
+        return a;
+    }
+};
+
 struct str_has_prefix
 {
     value operator()(const std::vector<value>& args) const

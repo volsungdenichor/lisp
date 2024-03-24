@@ -27,6 +27,7 @@ inline stack_type::frame_type default_frame()
         { "list"_s, callable{ list{}, "list" } },
         { "seq.map"_s, callable{ seq_map{}, "seq.map", 2 } },
         { "seq.filter"_s, callable{ seq_filter{}, "seq.filter", 2 } },
+        { "seq.rev"_s, callable{ seq_rev{}, "seq.rev", 1 } },
         { "str.has_prefix"_s, callable{ str_has_prefix{}, "str.has_prefix", 2 } },
         { "str.has_suffix"_s, callable{ str_has_suffix{}, "str.has_suffix", 2 } },
     };

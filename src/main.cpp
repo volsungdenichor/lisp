@@ -1,30 +1,36 @@
+#include <fstream>
 #include <iostream>
 #include <lisp/lisp.hpp>
 #include <lisp/utils/std_ostream.hpp>
 
-void run()
+std::string load_file(const std::string& path)
 {
-    std::string text = R"(
-        (begin
-            (let val 123)
-            (let func (lambda (arg) (/ arg 10.0)))
-            (print val)
-            (print (func val))
-        )
-    )";
-    const auto val = lisp::parse(text);
+    std::ifstream file{ path.c_str() };
+    if (!file)
+    {
+        throw std::runtime_error{ str("Cannot read from ", path, ".") };
+    }
+    return std::string{ (std::istreambuf_iterator<char>{ file }), std::istreambuf_iterator<char>{} };
+}
+
+int run(int argc, char* argv[])
+{
+    std::string file_content = load_file("../../src/input.lisp");
+    const auto val = lisp::parse(file_content);
 
     lisp::stack_type stack = lisp::default_stack();
 
-    std::cout << val << std::endl;
+    // std::cout << val << std::endl;
     std::cout << lisp::evaluate(val, stack) << std::endl;
+
+    return 0;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     try
     {
-        run();
+        return run(argc, argv);
     }
     catch (const std::exception& ex)
     {

@@ -23,27 +23,26 @@ struct lambda_base
     stack_type stack;
 };
 
-template <class T, class... Types>
-constexpr inline bool is_any_of = std::disjunction_v<std::is_same<T, Types>...>;
-
-struct value
+template <class Value>
+struct callable_base
 {
-    struct callable_base
+    using function_type = std::function<Value(const std::vector<Value>&)>;
+    function_type fn;
+    std::string name;
+
+    explicit callable_base(function_type fn, std::string name) : fn{ std::move(fn) }, name{ std::move(name) }
     {
-        using function_type = std::function<value(const std::vector<value>&)>;
-        function_type fn;
-        std::string name;
+    }
 
-        explicit callable_base(function_type fn, std::string name) : fn{ std::move(fn) }, name{ std::move(name) }
-        {
-        }
+    Value operator()(const std::vector<Value>& args) const
+    {
+        return fn(args);
+    }
+};
 
-        value operator()(const std::vector<value>& args) const
-        {
-            return fn(args);
-        }
-    };
-
+class value
+{
+public:
     using category_type = category;
     using null_type = null_t;
     using symbol_type = symbol;
@@ -51,36 +50,11 @@ struct value
     using integer_type = std::int32_t;
     using boolean_type = bool;
     using floating_point_type = double;
-    using callable_type = callable_base;
+    using callable_type = callable_base<value>;
     using array_type = std::vector<value>;
     using lambda_type = lambda_base<symbol_type, value>;
 
-    using variant_type = std::variant<
-        null_type,
-        string_type,
-        symbol_type,
-        integer_type,
-        floating_point_type,
-        boolean_type,
-        array_type,
-        callable_type,
-        box<lambda_type>>;
-
-    template <class T>
-    static constexpr inline bool is_valid_type = is_any_of<
-        T,
-        null_type,
-        string_type,
-        symbol_type,
-        integer_type,
-        floating_point_type,
-        boolean_type,
-        array_type,
-        callable_type,
-        lambda_type>;
-
-    variant_type m_data;
-
+public:
     value();
 
     value(null_type v);
@@ -121,6 +95,20 @@ struct value
     category type() const;
 
     friend std::ostream& operator<<(std::ostream& os, const value& item);
+
+private:
+    using variant_type = std::variant<
+        null_type,
+        string_type,
+        symbol_type,
+        integer_type,
+        floating_point_type,
+        boolean_type,
+        array_type,
+        callable_type,
+        box<lambda_type>>;
+
+    variant_type m_data;
 };
 
 value operator+(const value& lhs, const value& rhs);

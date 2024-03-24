@@ -101,6 +101,8 @@ public:
 
     value& operator=(value other);
 
+    explicit operator bool() const;
+
     bool is_null() const;
     bool is_string() const;
     bool is_symbol() const;

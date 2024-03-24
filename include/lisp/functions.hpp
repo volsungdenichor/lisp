@@ -76,10 +76,60 @@ struct list
     }
 };
 
-inline value quote(value v)
+struct callable_wrapper
 {
-    using namespace literals;
-    return value::array_type{ "quote"_s, std::move(v) };
-}
+    value::callable_type callable;
+
+    value operator()(value arg) const
+    {
+        return callable({ std::move(arg) });
+    }
+};
+
+struct seq_map
+{
+    value operator()(const std::vector<value>& args) const
+    {
+        const auto func = args.at(0).as_callable();
+        const auto& a = args.at(1).as_array();
+        array result;
+        result.reserve(a.size());
+        std::transform(std::begin(a), std::end(a), std::back_inserter(result), callable_wrapper{ func });
+        return result;
+    }
+};
+
+struct seq_filter
+{
+    value operator()(const std::vector<value>& args) const
+    {
+        const auto func = args.at(0).as_callable();
+        const auto& a = args.at(1).as_array();
+        array result;
+        result.reserve(a.size());
+        std::copy_if(std::begin(a), std::end(a), std::back_inserter(result), callable_wrapper{ func });
+        return result;
+    }
+};
+
+struct str_has_prefix
+{
+    value operator()(const std::vector<value>& args) const
+    {
+        const auto prefix = std::string_view{ args.at(0).as_string() };
+        const auto text = std::string_view{ args.at(1).as_string() };
+        return text.size() >= prefix.size() && text.substr(0, prefix.size()) == prefix;
+    }
+};
+
+struct str_has_suffix
+{
+    value operator()(const std::vector<value>& args) const
+    {
+        const auto suffix = std::string_view{ args.at(0).as_string() };
+        const auto text = std::string_view{ args.at(1).as_string() };
+        return text.size() >= suffix.size() && text.substr(text.size() - suffix.size()) == suffix;
+    }
+};
 
 }  // namespace lisp

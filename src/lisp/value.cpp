@@ -47,9 +47,18 @@ value::value(lambda_type v) : m_data{ std::move(v) }
 
 value& value::operator=(value other)
 {
+#if 1
     m_data.~variant_type();
     new (&m_data) variant_type{ std::move(other.m_data) };
+#else
+    std::swap(m_data, other.m_data);
+#endif
     return *this;
+}
+
+value::operator bool() const
+{
+    return is_boolean() && as_boolean();
 }
 
 category value::get_category() const

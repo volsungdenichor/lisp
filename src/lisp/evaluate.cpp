@@ -45,7 +45,7 @@ value evaluate(const value& expr, stack_type& stack)
             return result;
         }
 
-        const std::vector<value> args = std::invoke(
+        const std::vector<value> arg_values = std::invoke(
             [&]()
             {
                 std::vector<value> result;
@@ -61,24 +61,25 @@ value evaluate(const value& expr, stack_type& stack)
         const auto func = evaluate(a.at(0), stack);
         if (func.is_callable())
         {
-            return func.as_callable()(args);
+            return func.as_callable()(arg_values);
         }
         else if (func.is_lambda())
         {
             const auto& lambda = func.as_lambda();
             const auto& params = lambda.params.as_array();
-            if (params.size() != args.size())
+            if (params.size() != arg_values.size())
             {
-                throw std::runtime_error{ str("Invalid argument number: expected ", params.size(), ", got ", args.size()) };
+                throw std::runtime_error{ str(
+                    "Invalid argument number: expected ", params.size(), ", got ", arg_values.size()) };
             }
             auto new_stack = lambda.stack.next();
             for (std::size_t i = 0; i < params.size(); ++i)
             {
-                new_stack.insert(params.at(i).as_symbol(), args.at(i));
+                new_stack.insert(params.at(i).as_symbol(), arg_values.at(i));
             }
 
             const auto fn = [&](const std::vector<value>& arguments) -> value { return evaluate(lambda.body, new_stack); };
-            return value::callable_type{ fn, "?" }(args);
+            return value::callable_type{ fn, "lambda", params.size() }(arg_values);
         }
         else
         {

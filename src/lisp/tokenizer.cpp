@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <lisp/tokenizer.hpp>
 #include <lisp/utils/string_utils.hpp>
 #include <optional>
@@ -11,6 +12,7 @@ using tokenizer_result = std::tuple<token, std::string_view>;
 
 tokenizer_result read_quoted_string(std::string_view text)
 {
+    assert(!text.empty());
     auto it = std::begin(text) + 1;
     token result = "\"";
     while (it != std::end(text))
@@ -30,7 +32,7 @@ tokenizer_result read_quoted_string(std::string_view text)
             result += *it++;
         }
     }
-    return std::tuple{ result, make_string_view(it, std::end(text)) };
+    return tokenizer_result{ result, make_string_view(it, std::end(text)) };
 }
 
 std::optional<tokenizer_result> read_token(std::string_view text)
@@ -52,24 +54,24 @@ std::optional<tokenizer_result> read_token(std::string_view text)
         return read_quoted_string(text);
     }
 
-    const auto begin = std::begin(text);
-    const auto end = std::end(text);
+    const auto b = std::begin(text);
+    const auto e = std::end(text);
 
-    const auto iter = std::find_if(begin, end, [](char ch) { return is_space(ch) || is_parenthesis(ch); });
-    if (iter != end)
+    const auto iter = std::find_if(b, e, [](char ch) { return is_space(ch) || is_parenthesis(ch); });
+    if (iter != e)
     {
         if (is_space(*iter))
         {
-            return std::tuple{ token{ begin, iter }, make_string_view(iter + 1, end) };
+            return tokenizer_result{ token{ b, iter }, make_string_view(iter + 1, e) };
         }
         else
         {
-            return std::tuple{ token{ begin, iter }, make_string_view(iter, end) };
+            return tokenizer_result{ token{ b, iter }, make_string_view(iter, e) };
         }
     }
     else
     {
-        return std::tuple{ token{ std::move(text) }, std::string_view{} };
+        return tokenizer_result{ token{ std::move(text) }, std::string_view{} };
     }
 }
 

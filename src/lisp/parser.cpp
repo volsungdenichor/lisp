@@ -110,6 +110,10 @@ value read_from(std::vector<token>& tokens)
         return null;
     }
     const auto front = pop_front(tokens);
+    if (front == "'")
+    {
+        return array{ symbol{ "quote" }, read_from(tokens) };
+    }
     if (front == "(")
     {
         auto result = array{};
@@ -117,7 +121,7 @@ value read_from(std::vector<token>& tokens)
         {
             throw std::runtime_error{ "Invalid parentheses " };
         }
-        while (tokens.front() != ")")
+        while (!tokens.empty() && tokens.front() != ")")
         {
             result.push_back(read_from(tokens));
         }
@@ -132,7 +136,7 @@ value read_from(std::vector<token>& tokens)
 
 value parse(std::string_view text)
 {
-    auto tokens = tokenize(std::move(text));
+    auto tokens = tokenize(text);
     return read_from(tokens);
 }
 

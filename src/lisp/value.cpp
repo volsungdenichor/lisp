@@ -52,7 +52,7 @@ value& value::operator=(value other)
     return *this;
 }
 
-category value::type() const
+category value::get_category() const
 {
     return std::visit(
         overload{ [](const null_type&) { return category::null; },
@@ -233,7 +233,7 @@ value op(const value& lhs, const value& rhs, BinaryOp op, std::string_view op_na
     {
         return op(lhs.as_floating_point(), rhs.as_integer());
     }
-    throw std::runtime_error{ str("Cannot ", op_name, " ", lhs.type(), " and ", rhs.type()) };
+    throw std::runtime_error{ str("Cannot ", op_name, " ", lhs.get_category(), " and ", rhs.get_category()) };
 }
 
 template <class BinaryOp>
@@ -255,7 +255,7 @@ bool cmp(const value& lhs, const value& rhs, BinaryOp op)
     {
         return op(lhs.as_string(), rhs.as_string());
     }
-    throw std::runtime_error{ str("Cannot compare ", lhs.type(), " and ", rhs.type()) };
+    throw std::runtime_error{ str("Cannot compare ", lhs.get_category(), " and ", rhs.get_category()) };
 }
 
 value operator+(const value& lhs, const value& rhs)
@@ -280,7 +280,7 @@ value operator/(const value& lhs, const value& rhs)
 
 bool operator==(const value& lhs, const value& rhs)
 {
-    if (lhs.type() != rhs.type())
+    if (lhs.get_category() != rhs.get_category())
     {
         return false;
     }

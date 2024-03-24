@@ -9,6 +9,7 @@
 #include <lisp/symbol.hpp>
 #include <lisp/utils/box.hpp>
 #include <lisp/utils/overload.hpp>
+#include <optional>
 #include <variant>
 
 namespace lisp
@@ -29,13 +30,41 @@ struct callable_base
     using function_type = std::function<Value(const std::vector<Value>&)>;
     function_type fn;
     std::string name;
+    std::optional<std::size_t> arity;
+    std::vector<Value> bounds_args;
 
-    explicit callable_base(function_type fn, std::string name) : fn{ std::move(fn) }, name{ std::move(name) }
+    explicit callable_base(
+        function_type fn,
+        std::string name,
+        std::optional<std::size_t> arity = {},
+        std::vector<Value> bounds_args = std::vector<Value>{})
+        : fn{ std::move(fn) }
+        , name{ std::move(name) }
+        , arity{ std::move(arity) }
+        , bounds_args(std::move(bounds_args))
     {
     }
 
     Value operator()(const std::vector<Value>& args) const
     {
+        std::vector<Value> all_args;
+        all_args.insert(std::end(all_args), std::begin(bounds_args), std::end(bounds_args));
+        all_args.insert(std::end(all_args), std::begin(args), std::end(args));
+        if (arity)
+        {
+            if (all_args.size() < *arity)
+            {
+                return callable_base{ fn, name, arity, all_args };
+            }
+            else if (all_args.size() == *arity)
+            {
+                return fn(all_args);
+            }
+            else if (all_args.size() > *arity)
+            {
+                throw std::runtime_error{ str("Invalid argument count: expected ", *arity, ", actual ", all_args.size()) };
+            }
+        }
         return fn(args);
     }
 };
@@ -92,7 +121,7 @@ public:
     const callable_type& as_callable() const;
     const lambda_type& as_lambda() const;
 
-    category type() const;
+    category get_category() const;
 
     friend std::ostream& operator<<(std::ostream& os, const value& item);
 

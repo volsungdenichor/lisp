@@ -63,6 +63,22 @@ value evaluate(const value& expr, stack_type* stack)
             }
             return result;
         }
+        if (is(a.front(), "cond"))
+        {
+            for (auto it = std::next(std::begin(a)); it != std::end(a); ++it)
+            {
+                const auto& expr = it->as_array();
+                if (expr.size() != 2)
+                {
+                    throw std::runtime_error{ "cond: a list of pairs required" };
+                }
+                if (evaluate(expr[0], stack))
+                {
+                    return evaluate(expr[1], stack);
+                }
+            }
+            throw std::runtime_error{ "cond: no match found" };
+        }
 
         const std::vector<value> arg_values = std::invoke(
             [&]()

@@ -58,7 +58,16 @@ private:
     }
 };
 
+struct make_string_view_fn
+{
+    std::string_view operator()(std::string_view::iterator b, std::string_view::iterator e) const
+    {
+        return { std::addressof(*b), std::string_view::size_type(e - b) };
+    }
+};
+
 }  // namespace detail
 
 static constexpr inline auto delimit = detail::delimit_fn{};
 static constexpr inline auto str = detail::str_fn{};
+static constexpr inline auto make_string_view = detail::make_string_view_fn{};

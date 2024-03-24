@@ -130,7 +130,7 @@ value read_from(std::vector<token>& tokens)
     }
 }
 
-value parse(std::string text)
+value parse(std::string_view text)
 {
     auto tokens = tokenize(std::move(text));
     return read_from(tokens);

@@ -5,6 +5,6 @@
 namespace lisp
 {
 
-value parse(std::string text);
+value parse(std::string_view text);
 
 }  // namespace lisp

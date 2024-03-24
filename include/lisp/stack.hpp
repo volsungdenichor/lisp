@@ -13,37 +13,32 @@ struct stack_base
     using symbol_type = S;
     using value_type = V;
     using frame_type = std::map<symbol_type, value_type>;
-    std::vector<frame_type> frames;
+    frame_type frame;
+    stack_base* outer;
 
-    stack_base(std::vector<frame_type> f) : frames{ std::move(f) }
+    stack_base(frame_type frame, stack_base* outer = {}) : frame{ std::move(frame) }, outer{ outer }
     {
     }
 
     const value_type& insert(const symbol_type& s, const value_type& v)
     {
-        frames.back()[s] = v;
+        frame[s] = v;
         return v;
     }
 
     const value_type& operator[](const symbol_type& s) const
     {
-        for (auto it = frames.rbegin(); it != frames.rend(); ++it)
+        const auto iter = frame.find(s);
+        if (iter != frame.end())
         {
-            const auto& f = *it;
-            const auto iter = f.find(s);
-            if (iter != f.end())
-            {
-                return iter->second;
-            }
+            return iter->second;
         }
-        throw std::runtime_error{ str("Unrecognized symbol '", s, "'") };
-    }
+        if (outer)
+        {
+            return (*outer)[s];
+        }
 
-    stack_base next() const
-    {
-        stack_base result{ *this };
-        result.frames.push_back(frame_type{});
-        return result;
+        throw std::runtime_error{ str("Unrecognized symbol '", s, "'") };
     }
 };
 }  // namespace lisp

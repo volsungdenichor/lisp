@@ -3,7 +3,7 @@
 namespace lisp
 {
 
-value evaluate(const value& expr, stack_type& stack)
+value evaluate(const value& expr, stack_type* stack)
 {
     static const auto is = [](const value& v, const value::string_type& s) { return v == value{ value::symbol_type(s) }; };
     if (expr.is_array())
@@ -15,17 +15,21 @@ value evaluate(const value& expr, stack_type& stack)
             {
                 return evaluate(a.at(1), stack).as_boolean() ? evaluate(a.at(2), stack) : evaluate(a.at(3), stack);
             }
+            if (is(a.front(), "defun"))
+            {
+                return evaluate(array{ symbol{ "let" }, a.at(1), array{ symbol{ "lambda" }, a.at(2), a.at(3) } }, stack);
+            }
         }
         else if (a.size() == 3)
         {
             if (is(a.front(), "let"))
             {
                 auto res = evaluate(a.at(2), stack);
-                return stack.insert(a.at(1).as_symbol(), res);
+                return stack->insert(a.at(1).as_symbol(), res);
             }
             else if (is(a.front(), "lambda"))
             {
-                return value::lambda_type{ a.at(1), a.at(2), stack };
+                return value::lambda_type{ a.at(1), a.at(2), *stack };
             }
         }
         else if (a.size() == 2)
@@ -72,13 +76,15 @@ value evaluate(const value& expr, stack_type& stack)
                 throw std::runtime_error{ str(
                     "Invalid argument number: expected ", params.size(), ", got ", arg_values.size()) };
             }
-            auto new_stack = lambda.stack.next();
+            auto new_frame = stack_type::frame_type{};
             for (std::size_t i = 0; i < params.size(); ++i)
             {
-                new_stack.insert(params.at(i).as_symbol(), arg_values.at(i));
+                new_frame.emplace(params.at(i).as_symbol(), arg_values.at(i));
             }
 
-            const auto fn = [&](const std::vector<value>& arguments) -> value { return evaluate(lambda.body, new_stack); };
+            auto new_stack = stack_type{ new_frame, stack };
+
+            const auto fn = [&](const std::vector<value>& arguments) -> value { return evaluate(lambda.body, &new_stack); };
             return value::callable_type{ fn, "lambda", params.size() }(arg_values);
         }
         else
@@ -88,7 +94,7 @@ value evaluate(const value& expr, stack_type& stack)
     }
     else if (expr.is_symbol())
     {
-        return stack[expr.as_symbol()];
+        return (*stack)[expr.as_symbol()];
     }
     return expr;
 }

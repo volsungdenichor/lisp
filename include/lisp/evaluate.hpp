@@ -3,6 +3,6 @@
 namespace lisp
 {
 
-value evaluate(const value& expr, stack_type& stack);
+value evaluate(const value& expr, stack_type* stack);
 
 }  // namespace lisp

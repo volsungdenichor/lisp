@@ -9,6 +9,10 @@ array apply_macro(const array& a)
     {
         return array{ symbol{ "let" }, a.at(1), array{ symbol{ "lambda" }, a.at(2), a.at(3) } };
     }
+    if (a.size() > 2 && a.at(1) == symbol{ "|>" })
+    {
+        return array{ array{ std::begin(a) + 2, std::end(a) }, a.at(0) };
+    }
     return a;
 }
 

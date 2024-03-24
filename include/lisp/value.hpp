@@ -83,10 +83,15 @@ struct value
 
     value();
 
-    template <class T, std::enable_if_t<std::is_constructible_v<variant_type, T>, int> = 0>
-    value(T&& v) : m_data{ std::forward<T>(v) }
-    {
-    }
+    value(null_type v);
+    value(string_type v);
+    value(symbol_type v);
+    value(integer_type v);
+    value(floating_point_type v);
+    value(boolean_type v);
+    value(array_type v);
+    value(callable_type v);
+    value(lambda_type v);
 
     value(const value&) = default;
     value(value&&) = default;

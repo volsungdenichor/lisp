@@ -9,6 +9,42 @@ value::value() : m_data{ null_type{} }
 {
 }
 
+value::value(null_type v) : m_data{ std::move(v) }
+{
+}
+
+value::value(string_type v) : m_data{ std::move(v) }
+{
+}
+
+value::value(symbol_type v) : m_data{ std::move(v) }
+{
+}
+
+value::value(integer_type v) : m_data{ std::move(v) }
+{
+}
+
+value::value(floating_point_type v) : m_data{ std::move(v) }
+{
+}
+
+value::value(boolean_type v) : m_data{ std::move(v) }
+{
+}
+
+value::value(array_type v) : m_data{ std::move(v) }
+{
+}
+
+value::value(callable_type v) : m_data{ std::move(v) }
+{
+}
+
+value::value(lambda_type v) : m_data{ std::move(v) }
+{
+}
+
 value& value::operator=(value other)
 {
     m_data.~variant_type();

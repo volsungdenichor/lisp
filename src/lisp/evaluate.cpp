@@ -4,7 +4,7 @@
 namespace lisp
 {
 
-array do_apply_macro(const array& a)
+std::optional<array> do_apply_macro(const array& a)
 {
     if (a.size() == 4 && a.at(0) == symbol{ "defun" })
     {
@@ -14,13 +14,16 @@ array do_apply_macro(const array& a)
     {
         return array{ array{ std::begin(a) + 2, std::end(a) }, a.at(0) };
     }
-    return a;
+    if (a.size() == 3 && a.at(1) == symbol{ ":=" })
+    {
+        return array{ symbol{ "let" }, a.at(0), a.at(2) };
+    }
+    return {};
 }
 
 array apply_macro(const array& a)
 {
-    array result = do_apply_macro(a);
-    return result;
+    return do_apply_macro(a).value_or(a);
 }
 
 value evaluate(const value& expr, stack_type* stack)

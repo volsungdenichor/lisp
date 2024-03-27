@@ -15,7 +15,7 @@ std::string load_file(const std::string& path)
 
 int run(int argc, char* argv[])
 {
-    const std::string file_content = load_file("../../src/input.lisp");
+    const std::string file_content = load_file("src/input.lisp");
     const auto val = lisp::parse(file_content);
 
     lisp::stack_type stack = lisp::default_stack();

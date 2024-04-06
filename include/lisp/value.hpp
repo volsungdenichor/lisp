@@ -99,7 +99,7 @@ public:
     value(const value&) = default;
     value(value&&) = default;
 
-    value& operator=(value other);
+    value& operator=(const value& other);
 
     explicit operator bool() const;
 

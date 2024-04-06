@@ -4,9 +4,9 @@
             1
             (* n (fact (- n 1)))))
 
-    (lst := (quote ("Adam" "Beata" "Celina" "Dorota" "Edek")))
-    (is-woman := (str.has_suffix "a"))
-    (print (lst |> seq.filter is-woman))
-    (print (lst |> seq.at 2))
-    (print (lst |> seq.at 5))
+    (let foo (pipe (partial + 1) (partial * 10)))
+
+    (let lst (list 2 3 4 9 ))
+    (print lst)
+    (print (seq.map foo lst))
 )

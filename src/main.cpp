@@ -21,8 +21,8 @@ int run(int argc, char* argv[])
     lisp::stack_type stack = lisp::default_stack();
 
     // std::cout << val << std::endl;
-    std::cout << lisp::evaluate(val, &stack) << std::endl;
 
+    std::cout << lisp::evaluate(val, &stack) << std::endl;
     return 0;
 }
 

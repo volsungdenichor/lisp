@@ -1,21 +1,11 @@
 #include <lisp/parser.hpp>
 #include <lisp/tokenizer.hpp>
+#include <lisp/utils/container_utils.hpp>
 #include <lisp/utils/iterator_range.hpp>
 #include <optional>
 
 namespace lisp
 {
-
-token pop_front(std::vector<token>& v)
-{
-    if (v.empty())
-    {
-        throw std::runtime_error{ "Cannot pop from empty list" };
-    }
-    token result = v.front();
-    v.erase(std::begin(v));
-    return result;
-}
 
 std::optional<value::null_type> as_null(const token& tok)
 {

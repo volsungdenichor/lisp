@@ -1,5 +1,7 @@
 #pragma once
 
+#include <lisp/utils/container_utils.hpp>
+#include <lisp/utils/iterator_range.hpp>
 #include <lisp/value.hpp>
 
 namespace lisp
@@ -53,18 +55,7 @@ struct cons
 {
     value operator()(const std::vector<value>& args) const
     {
-        value::array_type res;
-        res.push_back(args.at(0));
-        if (args.at(1).is_array())
-        {
-            const auto& a = args.at(1).as_array();
-            res.insert(std::end(res), std::begin(a), std::end(a));
-        }
-        else
-        {
-            res.push_back(args.at(1));
-        }
-        return res;
+        return concat(vec(args.at(0)), args.at(1).is_array() ? args.at(1).as_array() : vec(args.at(1)));
     }
 };
 
@@ -73,6 +64,38 @@ struct list
     value operator()(const std::vector<value>& args) const
     {
         return args;
+    }
+};
+
+struct partial
+{
+    value operator()(const std::vector<value>& args) const
+    {
+        auto fn = args.at(0).as_callable();
+        std::vector<value> bound_args = iterator_range{ args }.drop(1);
+        auto func = [=](const std::vector<value>& call_args)
+        {
+            const std::vector<value> all_args = concat(bound_args, call_args);
+            return fn(all_args);
+        };
+        return value::callable_type{ func, "partial" };
+    }
+};
+
+struct pipe
+{
+    value operator()(const std::vector<value>& args) const
+    {
+        auto func = [=](const std::vector<value>& call_args)
+        {
+            value result = args.at(0).as_callable()(call_args);
+            for (const auto& fn : iterator_range{ args }.drop(1))
+            {
+                result = fn.as_callable()({ result });
+            }
+            return result;
+        };
+        return value::callable_type{ func, "pipe" };
     }
 };
 

@@ -45,14 +45,19 @@ value::value(lambda_type v) : m_data{ std::move(v) }
 {
 }
 
-value& value::operator=(value other)
+value& value::operator=(const value& other)
 {
-#if 1
-    m_data.~variant_type();
-    new (&m_data) variant_type{ std::move(other.m_data) };
-#else
-    std::swap(m_data, other.m_data);
-#endif
+    std::visit(
+        overload{ [&](const value::null_type v) { this->m_data.emplace<null_type>(v); },
+                  [&](const value::string_type& v) { this->m_data.emplace<string_type>(v); },
+                  [&](const value::symbol_type& v) { this->m_data.emplace<symbol_type>(v); },
+                  [&](const value::integer_type& v) { this->m_data.emplace<integer_type>(v); },
+                  [&](const value::floating_point_type& v) { this->m_data.emplace<floating_point_type>(v); },
+                  [&](const value::boolean_type& v) { this->m_data.emplace<boolean_type>(v); },
+                  [&](const value::array_type& v) { this->m_data.emplace<array_type>(v); },
+                  [&](const value::callable_type& v) { this->m_data.emplace<callable_type>(v); },
+                  [&](const box<value::lambda_type>& v) { this->m_data.emplace<box<lambda_type>>(v); } },
+        other.m_data);
     return *this;
 }
 

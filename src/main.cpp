@@ -3,49 +3,50 @@
 #include <iostream>
 #include <lisp/lisp.hpp>
 #include <lisp/utils/ansi.hpp>
+#include <lisp/utils/pipeline.hpp>
 #include <lisp/utils/std_ostream.hpp>
 #include <sstream>
 
-std::string load_file(const std::string& path)
+struct load_file
 {
-    std::ifstream file{ path.c_str() };
-    if (!file)
+    std::string operator()(const std::string& path) const
     {
-        throw std::runtime_error{ str("Cannot read from ", path, ".") };
+        std::ifstream file{ path.c_str() };
+        if (!file)
+        {
+            throw std::runtime_error{ str("Cannot read from ", path, ".") };
+        }
+        return { std::istreambuf_iterator<char>{ file }, std::istreambuf_iterator<char>{} };
     }
-    return { std::istreambuf_iterator<char>{ file }, std::istreambuf_iterator<char>{} };
-}
+};
 
-struct trim_fn
+auto trim_front(const std::function<bool(char)>& pred)
 {
-    static std::string_view trim_front(std::string_view txt, const std::function<bool(char)>& pred)
+    return [=](std::string_view txt)
     {
         while (!txt.empty() && pred(txt.front()))
         {
             txt.remove_prefix(1);
         }
         return txt;
-    }
+    };
+}
 
-    static std::string_view trim_back(std::string_view txt, const std::function<bool(char)>& pred)
+auto trim_back(const std::function<bool(char)>& pred)
+{
+    return [=](std::string_view txt)
     {
         while (!txt.empty() && pred(txt.back()))
         {
             txt.remove_suffix(1);
         }
-
         return txt;
-    }
-
-    std::string_view operator()(std::string_view txt, const std::function<bool(char)>& pred) const
-    {
-        return trim_back(trim_front(txt, pred), pred);
-    }
-};
+    };
+}
 
 auto trim(const std::function<bool(char)>& pred)
 {
-    return [=](std::string_view txt) { return trim_fn{}(txt, pred); };
+    return fn(trim_front(pred)) |= fn(trim_back(pred));
 }
 
 auto starts_with(std::string prefix)
@@ -53,43 +54,62 @@ auto starts_with(std::string prefix)
     return [=](std::string_view txt) { return txt.size() >= prefix.size() && txt.substr(0, prefix.size()) == prefix; };
 }
 
-std::vector<std::string> split(std::string text)
+struct split_lines
 {
-    std::vector<std::string> result;
-    std::stringstream ss{ text };
-
-    for (std::string line; std::getline(ss, line, '\n');)
+    std::vector<std::string> operator()(std::string text) const
     {
-        result.push_back(line);
+        std::vector<std::string> result;
+        std::stringstream ss{ text };
+
+        for (std::string line; std::getline(ss, line, '\n');)
+        {
+            result.push_back(line);
+        }
+
+        return result;
     }
+};
 
-    return result;
-}
-
-std::vector<std::string> filter_comments(std::vector<std::string> in)
+struct filter_comments
 {
-    static const auto is_space = [](char ch) { return std::isspace(ch); };
-    static const auto is_comment = [](std::string_view line) { return starts_with(";")(trim(is_space)(line)); };
-    in.erase(std::remove_if(in.begin(), in.end(), is_comment), in.end());
-    return in;
-}
+    std::vector<std::string> operator()(std::vector<std::string> in) const
+    {
+        static const auto is_space = [](char ch) { return std::isspace(ch); };
+        static const auto is_comment = fn(trim(is_space)) |= fn(starts_with(";"));
 
-std::string join(const std::vector<std::string>& lines)
+        in.erase(std::remove_if(in.begin(), in.end(), is_comment), in.end());
+        return in;
+    }
+};
+
+struct join_lines
 {
-    std::stringstream ss;
-    std::copy(lines.begin(), lines.end(), std::ostream_iterator<std::string>{ ss, "\n" });
-    return ss.str();
-}
+    std::string operator()(const std::vector<std::string>& lines) const
+    {
+        std::stringstream ss;
+        std::copy(lines.begin(), lines.end(), std::ostream_iterator<std::string>{ ss, "\n" });
+        return ss.str();
+    }
+};
 
 int run(int argc, char* argv[])
 {
-    const auto file_content = load_file("src/input.lisp");
-    const auto content = join(filter_comments(split(file_content)));
-    const auto val = lisp::parse(content);
-
     lisp::stack_type stack = lisp::default_stack();
 
-    std::cout << lisp::evaluate(val, &stack) << std::endl;
+    const auto val = "src/input.lisp"  //
+        |= fn(load_file{})             //
+        |= fn(split_lines{})           //
+        |= fn(filter_comments{})       //
+        |= fn(join_lines{})            //
+        |= fn([](const std::string& c) { return lisp::parse(c); });
+
+    std::cout << ansi::fg(ansi::color::dark_blue) << val << ansi::reset << "\n";
+
+    std::cout << ansi::fg(ansi::color::yellow);
+    const auto result = lisp::evaluate(val, &stack);
+    std::cout << ansi::reset;
+
+    std::cout << ansi::fg(ansi::color::dark_green) << result << ansi::reset << "\n";
 
     // print_stack(stack);
     return 0;

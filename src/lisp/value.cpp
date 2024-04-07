@@ -227,7 +227,7 @@ std::ostream& operator<<(std::ostream& os, const value& item)
                   [&](const value::boolean_type& v) { os << std::boolalpha << v; },
                   [&](const value::array_type& v) { os << "(" << delimit(v, " ") << ")"; },
                   [&](const value::callable_type& v) { os << v.name; },
-                  [&](const box<value::lambda_type>& v) { os << "lambda " << (*v).params; } },
+                  [&](const box<value::lambda_type>& v) { os << "lambda " << (*v).params << " " << (*v).body; } },
         item.m_data);
     return os;
 }

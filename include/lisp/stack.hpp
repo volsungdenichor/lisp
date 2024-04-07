@@ -26,7 +26,7 @@ struct stack_base
         return v;
     }
 
-    const value_type& operator[](const symbol_type& s) const
+    const value_type& get(const symbol_type& s) const
     {
         const auto iter = frame.find(s);
         if (iter != frame.end())
@@ -35,10 +35,16 @@ struct stack_base
         }
         if (outer)
         {
-            return (*outer)[s];
+            return outer->get(s);
         }
 
         throw std::runtime_error{ str("Unrecognized symbol '", s, "'") };
     }
+
+    const value_type& operator[](const symbol_type& s) const
+    {
+        return get(s);
+    }
 };
+
 }  // namespace lisp

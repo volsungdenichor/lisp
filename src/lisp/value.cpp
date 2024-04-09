@@ -322,6 +322,15 @@ value operator/(const value& lhs, const value& rhs)
     return op(lhs, rhs, std::divides{}, "divide");
 }
 
+value operator%(const value& lhs, const value& rhs)
+{
+    if (lhs.is_integer() && rhs.is_integer())
+    {
+        return lhs.as_integer() % rhs.as_integer();
+    }
+    throw std::runtime_error{ str("Cannot mod ", lhs.get_category(), " and ", rhs.get_category()) };
+}
+
 bool operator==(const value& lhs, const value& rhs)
 {
     if (lhs.get_category() != rhs.get_category())

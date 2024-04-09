@@ -164,6 +164,7 @@ value operator+(const value& lhs, const value& rhs);
 value operator-(const value& lhs, const value& rhs);
 value operator*(const value& lhs, const value& rhs);
 value operator/(const value& lhs, const value& rhs);
+value operator%(const value& lhs, const value& rhs);
 
 bool operator==(const value& lhs, const value& rhs);
 bool operator!=(const value& lhs, const value& rhs);

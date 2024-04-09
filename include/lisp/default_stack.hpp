@@ -21,6 +21,7 @@ inline stack_type::frame_type default_frame()
         { "<="_s, callable{ binary{ std::less_equal{} }, "less_equal", 2 } },
         { ">"_s, callable{ binary{ std::greater{} }, "greater", 2 } },
         { ">="_s, callable{ binary{ std::greater_equal{} }, "greater_equal", 2 } },
+        { "%"_s, callable{ binary{ std::modulus{} }, "mod", 2 } },
         { "car"_s, callable{ car{}, "car", 1 } },
         { "cdr"_s, callable{ cdr{}, "cdr", 1 } },
         { "cons"_s, callable{ cons{}, "cons", 2 } },

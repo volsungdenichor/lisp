@@ -2,8 +2,76 @@
 
 #include <iomanip>
 
+#include "lisp/utils/type_traits.h"
+
 namespace lisp
 {
+
+namespace
+{
+
+template <class T>
+category to_category()
+{
+    if constexpr (std::is_same_v<T, value::null_type>)
+    {
+        return category::null;
+    }
+    else if constexpr (std::is_same_v<T, value::string_type>)
+    {
+        return category::string;
+    }
+    else if constexpr (std::is_same_v<T, value::symbol_type>)
+    {
+        return category::symbol;
+    }
+    else if constexpr (std::is_same_v<T, value::integer_type>)
+    {
+        return category::integer;
+    }
+    else if constexpr (std::is_same_v<T, value::floating_point_type>)
+    {
+        return category::floating_point;
+    }
+    else if constexpr (std::is_same_v<T, value::boolean_type>)
+    {
+        return category::boolean;
+    }
+    else if constexpr (std::is_same_v<T, value::array_type>)
+    {
+        return category::array;
+    }
+    else if constexpr (std::is_same_v<T, value::callable_type>)
+    {
+        return category::callable;
+    }
+    else if constexpr (std::is_same_v<T, box<value::lambda_type>>)
+    {
+        return category::lambda;
+    }
+    else
+    {
+        static_assert(always_false<T>(), "Type not handled");
+    }
+};
+
+std::string build_message(category expected, category actual)
+{
+    return str("accessing: ", expected, ", actual: ", actual);
+};
+
+template <class T, class Variant>
+const T& get_value(const Variant& variant, category actual)
+{
+    const auto ptr = std::get_if<T>(&variant);
+    if (!ptr)
+    {
+        throw std::runtime_error{ build_message(to_category<T>(), actual) };
+    }
+    return *ptr;
+}
+
+}  // namespace
 
 value::value() : m_data{ null_type{} }
 {
@@ -128,92 +196,47 @@ bool value::is_lambda() const
 
 const value::null_type& value::as_null() const
 {
-    const auto ptr = std::get_if<null_type>(&m_data);
-    if (!ptr)
-    {
-        throw std::runtime_error{ str("accessing: ", category_type::null, ", actual: ", category()) };
-    }
-    return *ptr;
+    return get_value<value::null_type>(m_data, get_category());
 }
 
 const value::string_type& value::as_string() const
 {
-    const auto ptr = std::get_if<string_type>(&m_data);
-    if (!ptr)
-    {
-        throw std::runtime_error{ str("accessing: ", category_type::string, ", actual: ", category()) };
-    }
-    return *ptr;
+    return get_value<value::string_type>(m_data, get_category());
 }
 
 const value::symbol_type& value::as_symbol() const
 {
-    const auto ptr = std::get_if<symbol_type>(&m_data);
-    if (!ptr)
-    {
-        throw std::runtime_error{ str("accessing: ", category_type::symbol, ", actual: ", category()) };
-    }
-    return *ptr;
+    return get_value<value::symbol_type>(m_data, get_category());
 }
 
 const value::integer_type& value::as_integer() const
 {
-    const auto ptr = std::get_if<integer_type>(&m_data);
-    if (!ptr)
-    {
-        throw std::runtime_error{ str("accessing: ", category_type::integer, ", actual: ", category()) };
-    }
-    return *ptr;
+    return get_value<value::integer_type>(m_data, get_category());
 }
 
 const value::boolean_type& value::as_boolean() const
 {
-    const auto ptr = std::get_if<boolean_type>(&m_data);
-    if (!ptr)
-    {
-        throw std::runtime_error{ str("accessing: ", category_type::boolean, ", actual: ", category()) };
-    }
-    return *ptr;
+    return get_value<value::boolean_type>(m_data, get_category());
 }
 
 const value::floating_point_type& value::as_floating_point() const
 {
-    const auto ptr = std::get_if<floating_point_type>(&m_data);
-    if (!ptr)
-    {
-        throw std::runtime_error{ str("accessing: ", category_type::floating_point, ", actual: ", category()) };
-    }
-    return *ptr;
+    return get_value<value::floating_point_type>(m_data, get_category());
 }
 
 const value::array_type& value::as_array() const
 {
-    const auto ptr = std::get_if<array_type>(&m_data);
-    if (!ptr)
-    {
-        throw std::runtime_error{ str("accessing: ", category_type::array, ", actual: ", category()) };
-    }
-    return *ptr;
+    return get_value<value::array_type>(m_data, get_category());
 }
 
 const value::callable_type& value::as_callable() const
 {
-    const auto ptr = std::get_if<callable_type>(&m_data);
-    if (!ptr)
-    {
-        throw std::runtime_error{ str("accessing: ", category_type::callable, ", actual: ", category()) };
-    }
-    return *ptr;
+    return get_value<value::callable_type>(m_data, get_category());
 }
 
 const value::lambda_type& value::as_lambda() const
 {
-    const auto ptr = std::get_if<box<lambda_type>>(&m_data);
-    if (!ptr)
-    {
-        throw std::runtime_error{ str("accessing: ", category_type::lambda, ", actual: ", category()) };
-    }
-    return **ptr;
+    return *get_value<box<lambda_type>>(m_data, get_category());
 }
 
 std::ostream& operator<<(std::ostream& os, const value& item)

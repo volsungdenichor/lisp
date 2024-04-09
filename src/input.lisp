@@ -9,4 +9,5 @@
     (let lst (list 2 3 4 9 ))
     (print lst)
     (print (seq.map add-1-then-mult-by-10 lst))
+    (print (seq.map fact lst))
 )

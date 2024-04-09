@@ -75,7 +75,8 @@ struct evaluate_fn
                 }
                 else if (a[0] == sym_lambda)
                 {
-                    return value::lambda_type{ args.at(0), args.at(1), stack };
+                    return value::callable_type{ callable_lambda{ value::lambda_type{ args.at(0), args.at(1), stack } },
+                                                 "lambda" };
                 }
             }
             if (a.size() == 2)
@@ -126,29 +127,22 @@ struct evaluate_fn
                     return result;
                 });
 
-            if (op.is_lambda())
+            try
             {
-                return value::callable_type{ callable_lambda{ op.as_lambda() }, "lambda" }(arg_values);
+                return op.as_callable()(arg_values);
             }
-            else if (op.is_callable())
+            catch (const std::exception& ex)
             {
-                try
+                std::stringstream ss;
+                ss << "Exception: " << ex.what() << "\n"
+                   << "Args:"
+                   << "\n";
+                for (std::size_t i = 0; i < arg_values.size(); ++i)
                 {
-                    return op.as_callable()(arg_values);
-                }
-                catch (const std::exception& ex)
-                {
-                    std::stringstream ss;
-                    ss << "on evaluation of " << a[0] << ": " << ex.what() << "\n"
-                       << "Args:"
+                    ss << "[" << i << "] " << arg_values[i] << " <" << arg_values[i].get_category() << ">"
                        << "\n";
-                    for (std::size_t i = 0; i < arg_values.size(); ++i)
-                    {
-                        ss << "[" << i << "] " << arg_values[i] << " <" << arg_values[i].get_category() << ">"
-                           << "\n";
-                    }
-                    throw std::runtime_error{ ss.str() };
                 }
+                throw std::runtime_error{ ss.str() };
             }
         }
         return expr;

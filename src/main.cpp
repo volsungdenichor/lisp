@@ -96,11 +96,11 @@ int run(int argc, char* argv[])
 {
     lisp::stack_type stack = lisp::default_stack();
 
-    const auto val = "src/input.lisp"  //
-        |= fn(load_file{})             //
-        |= fn(split_lines{})           //
-        |= fn(filter_comments{})       //
-        |= fn(join_lines{})            //
+    const auto val = "../../src/input.lisp"  //
+        |= fn(load_file{})                   //
+        |= fn(split_lines{})                 //
+        |= fn(filter_comments{})             //
+        |= fn(join_lines{})                  //
         |= fn([](const std::string& c) { return lisp::parse(c); });
 
     std::cout << ansi::fg(ansi::color::dark_blue) << val << ansi::reset << "\n";

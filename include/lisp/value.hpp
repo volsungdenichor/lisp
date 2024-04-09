@@ -37,7 +37,14 @@ struct callable_base
 
     Value operator()(const std::vector<Value>& args) const
     {
-        return fn(args);
+        try
+        {
+            return fn(args);
+        }
+        catch (const std::exception& ex)
+        {
+            throw std::runtime_error{ str("On calling ", name, ": ", ex.what()) };
+        }
     }
 };
 

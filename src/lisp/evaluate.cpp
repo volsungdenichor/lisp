@@ -76,7 +76,8 @@ struct evaluate_fn
                 else if (a[0] == sym_lambda)
                 {
                     return value::callable_type{ callable_lambda{ value::lambda_type{ args.at(0), args.at(1), stack } },
-                                                 "lambda" };
+                                                 "lambda",
+                                                 args.at(1).as_array().size() };
                 }
             }
             if (a.size() == 2)

@@ -8,6 +8,7 @@
 #include <lisp/stack.hpp>
 #include <lisp/symbol.hpp>
 #include <lisp/utils/box.hpp>
+#include <lisp/utils/container_utils.hpp>
 #include <lisp/utils/overload.hpp>
 #include <optional>
 #include <variant>
@@ -30,16 +31,54 @@ struct callable_base
     using function_type = std::function<Value(const std::vector<Value>&)>;
     function_type fn;
     std::string name;
+    std::optional<std::size_t> arity;
+    std::vector<Value> bound_args;
 
-    explicit callable_base(function_type fn, std::string name) : fn{ std::move(fn) }, name{ std::move(name) }
+    explicit callable_base(function_type fn, std::string name, std::optional<int> arity = {})
+        : fn{ std::move(fn) }
+        , name{ std::move(name) }
+        , arity{ arity }
+        , bound_args{}
     {
+    }
+
+    explicit callable_base(const callable_base& self, std::vector<Value>&& bound_args)
+        : fn{ self.fn }
+        , name{ self.name }
+        , arity{ self.arity }
+        , bound_args(std::move(bound_args))
+    {
+    }
+
+    Value call(const std::vector<Value>& args) const
+    {
+        if (arity)
+        {
+            std::vector<Value> all_args = concat(bound_args, args);
+            if (all_args.size() > *arity)
+            {
+                throw std::runtime_error{ str("Expected ", *arity, " arguments, got ", all_args.size()) };
+            }
+            else if (all_args.size() < *arity)
+            {
+                return callable_base{ *this, std::move(all_args) };
+            }
+            else
+            {
+                return fn(all_args);
+            }
+        }
+        else
+        {
+            return fn(args);
+        }
     }
 
     Value operator()(const std::vector<Value>& args) const
     {
         try
         {
-            return fn(args);
+            return call(args);
         }
         catch (const std::exception& ex)
         {

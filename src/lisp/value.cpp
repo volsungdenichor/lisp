@@ -249,7 +249,14 @@ std::ostream& operator<<(std::ostream& os, const value& item)
                   [&](const value::floating_point_type& v) { os << std::fixed << std::setprecision(1) << v; },
                   [&](const value::boolean_type& v) { os << std::boolalpha << v; },
                   [&](const value::array_type& v) { os << "(" << delimit(v, " ") << ")"; },
-                  [&](const value::callable_type& v) { os << v.name; },
+                  [&](const value::callable_type& v)
+                  {
+                      os << v.name;
+                      if (!v.bound_args.empty())
+                      {
+                          os << ", bound_args=[" << delimit(v.bound_args, ", ") << "]";
+                      }
+                  },
                   [&](const box<value::lambda_type>& v) { os << "lambda " << (*v).params << " " << (*v).body; } },
         item.m_data);
     return os;

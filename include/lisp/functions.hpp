@@ -14,10 +14,6 @@ struct binary
 
     value operator()(const std::vector<value>& args) const
     {
-        if (args.size() != 2)
-        {
-            throw std::runtime_error{ str("Invalid argument number: expected ", 2, ", got ", args.size()) };
-        }
         return op(args.at(0), args.at(1));
     }
 };
@@ -78,7 +74,7 @@ struct partial
             const std::vector<value> all_args = concat(bound_args, call_args);
             return fn(all_args);
         };
-        return value::callable_type{ func, "partial" };
+        return value::callable_type{ func, str("partial func=", args[0], ", bound_args=[", delimit(bound_args, ", "), "]") };
     }
 };
 
@@ -159,6 +155,19 @@ struct seq_at
         {
             return array{ symbol{ "err" }, str("invalid index") };
         }
+    }
+};
+
+struct str_cat
+{
+    value operator()(const std::vector<value>& args) const
+    {
+        std::stringstream ss;
+        for (const value& a : args)
+        {
+            ss << a.as_string();
+        }
+        return ss.str();
     }
 };
 

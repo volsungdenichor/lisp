@@ -11,6 +11,52 @@ const auto sym_if = symbol{ "if" };
 const auto sym_begin = symbol{ "begin" };
 const auto sym_cond = symbol{ "cond" };
 const auto sym_quote = symbol{ "quote" };
+const auto sym_fwd_pipe = symbol{ "|>" };
+
+std::vector<array> split_pipes(const array& a)
+{
+    if (a.empty())
+    {
+        return {};
+    }
+    const auto iter = std::find(std::begin(a), std::end(a), sym_fwd_pipe);
+    if (iter != std::end(a))
+    {
+        return concat(
+            vec(array(iterator_range{ std::begin(a), iter })),
+            split_pipes(array(iterator_range{ std::next(iter), std::end(a) })));
+    }
+    else
+    {
+        return vec(a);
+    }
+}
+
+array fold_pipes(const std::vector<array>& a)
+{
+    if (a.size() >= 1)
+    {
+        const auto last = a.back();
+        const auto right = fold_pipes(iterator_range{ a }.drop_back(1));
+        if (right.empty())
+        {
+            return last;
+        }
+        else if (right.size() == 1 && right.at(0).is_symbol())
+        {
+            return concat(last, right);
+        }
+        else
+        {
+            return concat(last, array{ right });
+        }
+    }
+    else if (a.size() == 1)
+    {
+        return a.front();
+    }
+    return {};
+}
 
 std::optional<array> do_apply_macro(const array& a)
 {
@@ -21,6 +67,11 @@ std::optional<array> do_apply_macro(const array& a)
     if (a.size() == 3 && a.at(1) == symbol{ ":=" })
     {
         return array{ sym_let, a.at(0), a.at(2) };
+    }
+    const auto p = split_pipes(a);
+    if (p.size() > 1)
+    {
+        return fold_pipes(p);
     }
     return {};
 }
@@ -75,9 +126,12 @@ struct evaluate_fn
                 }
                 else if (a[0] == sym_lambda)
                 {
-                    return value::callable_type{ callable_lambda{ value::lambda_type{ args.at(0), args.at(1), stack } },
-                                                 "lambda",
-                                                 args.at(1).as_array().size() };
+                    const auto params = args.at(0);
+                    const auto body = args.at(1);
+                    const auto arity = params.as_array().size();
+                    return value::callable_type{ callable_lambda{ value::lambda_type{ params, body, stack } },
+                                                 str("lambda [", arity, "]"),
+                                                 arity };
                 }
             }
             if (a.size() == 2)

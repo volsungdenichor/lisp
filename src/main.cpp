@@ -92,6 +92,11 @@ struct join_lines
     }
 };
 
+namespace lisp
+{
+
+}  // namespace lisp
+
 int run(int argc, char* argv[])
 {
     lisp::stack_type stack = lisp::default_stack();

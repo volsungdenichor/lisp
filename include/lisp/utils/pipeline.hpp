@@ -101,4 +101,3 @@ constexpr decltype(auto) operator|=(T&& item, const pipeline_t<Pipes...>& pipeli
 }  // namespace detail
 
 using detail::fn;
-static constexpr inline auto pipe = fn;

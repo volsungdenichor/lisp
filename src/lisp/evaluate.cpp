@@ -37,7 +37,7 @@ array fold_pipes(const std::vector<array>& a)
     if (a.size() >= 1)
     {
         const auto last = a.back();
-        const auto right = fold_pipes(iterator_range{ a }.drop_back(1));
+        const auto right = fold_pipes(iterator_range{ a } |= drop_back(1));
         if (right.empty())
         {
             return last;
@@ -110,7 +110,7 @@ struct evaluate_fn
         else if (expr.is_array())
         {
             const auto a = apply_macro(expr.as_array());
-            const auto args = iterator_range{ a }.drop(1);
+            const auto args = iterator_range{ a } |= drop(1);
             if (a.size() == 4)
             {
                 if (a[0] == sym_if)

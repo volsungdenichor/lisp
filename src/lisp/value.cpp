@@ -2,7 +2,7 @@
 
 #include <iomanip>
 
-#include "lisp/utils/type_traits.h"
+#include "lisp/utils/type_traits.hpp"
 
 namespace lisp
 {

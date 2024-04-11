@@ -68,7 +68,7 @@ struct partial
     value operator()(const std::vector<value>& args) const
     {
         auto fn = args.at(0).as_callable();
-        std::vector<value> bound_args = iterator_range{ args }.drop(1);
+        std::vector<value> bound_args = iterator_range{ args } |= drop(1);
         auto func = [=](const std::vector<value>& call_args)
         {
             const std::vector<value> all_args = concat(bound_args, call_args);
@@ -85,7 +85,7 @@ struct pipe
         auto func = [=](const std::vector<value>& call_args)
         {
             value result = args.at(0).as_callable()(call_args);
-            for (const auto& fn : iterator_range{ args }.drop(1))
+            for (const auto& fn : iterator_range{ args } |= drop(1))
             {
                 result = fn.as_callable()({ result });
             }

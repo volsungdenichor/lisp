@@ -20,7 +20,7 @@ std::optional<value::string_type> as_string(const token& tok)
 {
     if (tok.front() == '\"' && tok.back() == '\"')
     {
-        return iterator_range{ tok }.drop(1).drop_back(1);
+        return iterator_range{ tok } |= drop(1) |= drop_back(1);
     }
     return {};
 }

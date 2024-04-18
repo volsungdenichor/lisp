@@ -149,11 +149,12 @@ struct seq_at
         const auto& a = args.at(1).as_array();
         if (n < static_cast<value::integer_type>(a.size()))
         {
-            return array{ symbol{ "ok" }, a[n] };
+            // return array{ symbol{ "ok" }, a[n] };
+            return a[n];
         }
         else
         {
-            return array{ symbol{ "err" }, str("invalid index") };
+            return null;
         }
     }
 };

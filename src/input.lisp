@@ -12,5 +12,5 @@
     (let lst (list 2 3 4 9 11 14 16 20 21 ))
     (print lst)
     (print (seq.map add-1-then-mult-by-10 lst))
-    (print (lst |> seq.filter is_even |> seq.map (* 10)))
+    (print (lst |> seq.filter is_even |> seq.map (* 10) ))
 )

@@ -3,6 +3,8 @@
 #include <functional>
 #include <tuple>
 
+#include "lisp/utils/type_traits.hpp"
+
 namespace detail
 {
 
@@ -92,7 +94,7 @@ constexpr auto operator|=(pipeline_t<L...> lhs, pipeline_t<R...> rhs)
     return fn(std::move(lhs), std::move(rhs));
 }
 
-template <class T, class... Pipes, std::enable_if_t<!detail::is_pipeline<std::decay_t<T>>::value, int> = 0>
+template <class T, class... Pipes, require<!detail::is_pipeline<std::decay_t<T>>::value> = 0>
 constexpr decltype(auto) operator|=(T&& item, const pipeline_t<Pipes...>& pipeline)
 {
     return pipeline(std::forward<T>(item));

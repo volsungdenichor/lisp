@@ -25,3 +25,6 @@ static constexpr inline bool is_detected_v = is_detected<Op, Args...>::value;
 
 template <class... T>
 constexpr bool always_false = false;
+
+template <bool Cond>
+using require = std::enable_if_t<Cond, int>;

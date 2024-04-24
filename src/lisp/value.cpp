@@ -243,7 +243,7 @@ std::ostream& operator<<(std::ostream& os, const value& item)
 {
     std::visit(
         overload{ [&](const value::null_type& v) { os << "null"; },
-                  [&](const value::string_type& v) { os << std::quoted(v); },
+                  [&](const value::string_type& v) { os << v; },
                   [&](const value::symbol_type& v) { os << v; },
                   [&](const value::integer_type& v) { os << v; },
                   [&](const value::floating_point_type& v) { os << std::fixed << std::setprecision(1) << v; },

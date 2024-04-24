@@ -166,7 +166,7 @@ struct str_cat
         std::stringstream ss;
         for (const value& a : args)
         {
-            ss << a.as_string();
+            ss << a;
         }
         return ss.str();
     }

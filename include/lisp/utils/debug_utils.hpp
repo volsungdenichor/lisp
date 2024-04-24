@@ -51,4 +51,8 @@ struct code_location
     }
 };
 
-#define CODE_LOCATION code_location{ __FILE__, __LINE__, __FUNCTION__ };
+#define CODE_LOCATION                    \
+    code_location                        \
+    {                                    \
+        __FILE__, __LINE__, __FUNCTION__ \
+    }

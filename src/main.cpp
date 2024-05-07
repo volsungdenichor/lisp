@@ -1,26 +1,30 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <lisp/lisp.hpp>
 #include <lisp/utils/ansi.hpp>
 #include <lisp/utils/pipeline.hpp>
 #include <lisp/utils/std_ostream.hpp>
 #include <sstream>
 
-struct load_file
-{
-    std::string operator()(const std::string& path) const
-    {
-        std::ifstream file{ path.c_str() };
-        if (!file)
-        {
-            throw std::runtime_error{ str("Cannot read from ", path, ".") };
-        }
-        return { std::istreambuf_iterator<char>{ file }, std::istreambuf_iterator<char>{} };
-    }
-};
+template <class... Args>
+using action_t = std::function<void(Args...)>;
 
-auto trim_front(const std::function<bool(char)>& pred)
+template <class... Args>
+using predicate_t = std::function<bool(Args...)>;
+
+auto load_file(const std::string& path) -> std::string
+{
+    std::ifstream file{ path.c_str() };
+    if (!file)
+    {
+        throw std::runtime_error{ str("Cannot read from ", path, ".") };
+    }
+    return { std::istreambuf_iterator<char>{ file }, std::istreambuf_iterator<char>{} };
+}
+
+auto trim_front(const predicate_t<char>& pred) -> std::function<std::string_view(std::string_view)>
 {
     return [=](std::string_view txt)
     {
@@ -32,7 +36,7 @@ auto trim_front(const std::function<bool(char)>& pred)
     };
 }
 
-auto trim_back(const std::function<bool(char)>& pred)
+auto trim_back(const predicate_t<char>& pred) -> std::function<std::string_view(std::string_view)>
 {
     return [=](std::string_view txt)
     {
@@ -44,58 +48,44 @@ auto trim_back(const std::function<bool(char)>& pred)
     };
 }
 
-auto trim(const std::function<bool(char)>& pred)
+auto trim(const predicate_t<char>& pred) -> std::function<std::string_view(std::string_view)>
 {
     return fn(trim_front(pred)) |= fn(trim_back(pred));
 }
 
-auto starts_with(std::string prefix)
+auto starts_with(std::string prefix) -> predicate_t<std::string_view>
 {
     return [=](std::string_view txt) { return txt.size() >= prefix.size() && txt.substr(0, prefix.size()) == prefix; };
 }
 
-struct split_lines
+auto split_lines(const std::string& text) -> std::vector<std::string>
 {
-    std::vector<std::string> operator()(std::string text) const
+    std::vector<std::string> result;
+    std::stringstream ss{ text };
+
+    for (std::string line; std::getline(ss, line, '\n');)
     {
-        std::vector<std::string> result;
-        std::stringstream ss{ text };
-
-        for (std::string line; std::getline(ss, line, '\n');)
-        {
-            result.push_back(line);
-        }
-
-        return result;
+        result.push_back(line);
     }
-};
 
-struct filter_comments
+    return result;
+}
+
+auto filter_comments(std::vector<std::string> in) -> std::vector<std::string>
 {
-    std::vector<std::string> operator()(std::vector<std::string> in) const
-    {
-        static const auto is_space = [](char ch) { return std::isspace(ch); };
-        static const auto is_comment = fn(trim(is_space)) |= fn(starts_with(";"));
+    static const auto is_space = [](char ch) { return std::isspace(ch); };
+    static const auto is_comment = fn(trim(is_space)) |= fn(starts_with(";"));
 
-        in.erase(std::remove_if(in.begin(), in.end(), is_comment), in.end());
-        return in;
-    }
-};
+    remove_erase_if(in, is_comment);
+    return in;
+}
 
-struct join_lines
+auto join_lines(const std::vector<std::string>& lines) -> std::string
 {
-    std::string operator()(const std::vector<std::string>& lines) const
-    {
-        std::stringstream ss;
-        std::copy(lines.begin(), lines.end(), std::ostream_iterator<std::string>{ ss, "\n" });
-        return ss.str();
-    }
-};
-
-namespace lisp
-{
-
-}  // namespace lisp
+    std::stringstream ss;
+    std::copy(lines.begin(), lines.end(), std::ostream_iterator<std::string>{ ss, "\n" });
+    return ss.str();
+}
 
 int run(int argc, char* argv[])
 {
@@ -105,12 +95,12 @@ int run(int argc, char* argv[])
                                ? std::string{ argv[1] }
                                : std::string{ "../../src/input.lisp" };
 
-    const auto val = file_name    //
-        |= fn(load_file{})        //
-        |= fn(split_lines{})      //
-        |= fn(filter_comments{})  //
-        |= fn(join_lines{})       //
-        |= fn([](const std::string& c) { return lisp::parse(c); });
+    const auto val = file_name   //
+        |= fn(&load_file)        //
+        |= fn(&split_lines)      //
+        |= fn(&filter_comments)  //
+        |= fn(&join_lines)       //
+        |= fn(&lisp::parse);
 
     std::cout << ansi::fg(ansi::color::dark_blue) << val << ansi::reset << "\n";
 

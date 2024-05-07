@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <vector>
 
 template <class Head, class... Tail>
@@ -28,4 +29,12 @@ T pop_front(std::vector<T>& v)
     T result = v.front();
     v.erase(std::begin(v));
     return result;
+}
+
+template <class Container, class Pred>
+void remove_erase_if(Container& container, Pred&& pred)
+{
+    container.erase(
+        std::remove_if(std::begin(container), std::end(container), std::forward<Pred>(pred)),  //
+        std::end(container));
 }

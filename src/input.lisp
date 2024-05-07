@@ -11,9 +11,9 @@
 
     (let lst (list 2 3 4 9 11 14 16 20 21 ))
     (print lst)
-    (print (pipe
-        seq.filter is_even)
-        seq.map (* 10))
+    (print ((pipe
+        (partial seq.filter is_even)
+        (partial seq.map (partial * 10))
         seq.rev)
         lst))
 )

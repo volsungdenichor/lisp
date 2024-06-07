@@ -93,7 +93,7 @@ int run(int argc, char* argv[])
 
     const auto file_name = argc >= 2  //
                                ? std::string{ argv[1] }
-                               : std::string{ "../../src/input.lisp" };
+                               : std::string{ "../src/input.lisp" };
 
     const auto val = file_name   //
         |= fn(&load_file)        //
